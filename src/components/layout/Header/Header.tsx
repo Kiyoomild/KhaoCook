@@ -1,5 +1,5 @@
 import React from 'react'
-import KhaoCook5 from '../pictures/KhaoCook5.png'
+import KhaoCook5 from './assets/KhaoCook5.png'
 
 const Header: React.FC = () => {
   return (
