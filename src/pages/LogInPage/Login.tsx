@@ -1,6 +1,6 @@
 import { useState} from 'react'
-import KhaoCook5 from '../pictures/KhaoCook5.png'
-import './Login.css'
+import KhaoCook5 from './assets/KhaoCook5.png'
+import './pages/Login.css'
 
 export default function Login() {
     const [ username, setUsername ] = useState('');

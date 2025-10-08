@@ -12,25 +12,27 @@
     background-color: #FFAB36;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding: 6rem;
     position: relative;
     overflow: hidden;
 }
 
-.login-container {
+/*.login-container {
     text-align: right;
     position: relative;
 }
+*/
 
 .logo-image {
-    position: relative;
-    text-align: left;
-    width: 100%;
+    width: auto;
+    max-width: 1000px;
     height: auto;
+    object-fit: contain;
 }
 
 .right-side {
-    width: 50%;
+    width: 40%;
     height: 100%;
     background-color: #fff;
     display: flex;
@@ -53,7 +55,7 @@
 }
 
 .form-title {
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: 900;
     text-align: center;
     margin-bottom: 3rem;
@@ -69,6 +71,9 @@
 .input-group {
     display: flex;
     flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    align-items: flex-end;
 }
 
 .input-field {
@@ -95,13 +100,12 @@
 .forgot-password {
     text-align: right;
     margin-top: 10px;
-    font-size: 0.5rem;
 }
 
 .forgot-password a {
     color: #FFAB36;
     text-decoration: none;
-    font-size: 0.875rem;
+    font-size: 0.5rem;
     transition: color 0.3s;
     margin-top: 10px;
 }
@@ -146,22 +150,66 @@
     color: #FFAB36;
 }
 
+/* Responsive สำหรับ Tablet */
+@media (max-width: 1024px) {
+    .left-side {
+        padding-left: 2rem;
+    }
+    
+    .logo-image {
+        width: 70%;
+        max-width: 400px;
+    }
+    
+    .right-side {
+        width: 55%;
+    }
+}
+
+/* Responsive สำหรับ Mobile */
 @media (max-width: 768px) {
     .login-container {
         flex-direction: column;
     }
-    .left-side, .right-side {
+    
+    .left-side {
         width: 100%;
-        border-radius: 0;
+        min-height: 30vh;
+        justify-content: center;
+        padding: 2rem;
     }
+    
+    .logo-image {
+        width: 50%;
+        max-width: 250px;
+    }
+    
     .right-side {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-        border-top-right-radius: 5rem;
-        border-bottom-right-radius: 5rem;
-        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+        position: relative;
+        width: 100%;
+        transform: none;
+        border-radius: 0;
+        border-top-left-radius: 3rem;
+        border-top-right-radius: 3rem;
+        top: 0;
     }
-    .form-container {
-        padding: 0 2rem;
+}
+
+/* Responsive สำหรับ Mobile เล็ก */
+@media (max-width: 480px) {
+    .left-side {
+        min-height: 25vh;
+        padding: 1rem;
+    }
+    
+    .logo-image {
+        width: 60%;
+        max-width: 200px;
+    }
+    
+    .right-side {
+        padding: 2rem 1.5rem;
+        border-top-left-radius: 2rem;
+        border-top-right-radius: 2rem;
     }
 }

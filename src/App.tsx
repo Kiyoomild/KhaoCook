@@ -1,12 +1,17 @@
 import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Header from './components/Header.tsx'
 import Login from './components/Login.tsx'
 
-const App = () => {
+const App: React.FC = () => {
 
   return (
-    <>
-      <Login />
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/header" element={<Header />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
