@@ -1,8 +1,8 @@
-
-
-function HomePage() {
+const HomePage: React.FC = () => {
   return (
-    <div>HomePage</div>
+    <div>
+      Homepage
+    </div>
   )
 }
 

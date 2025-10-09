@@ -1,0 +1,80 @@
+/* หน้า not logged in */
+.profile-not-logged-in {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f3f4f6;
+}
+
+.profile-not-logged-in h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+}
+
+.profile-not-logged-in button {
+    padding: 0.5rem 1rem;
+    color: #fff;
+    background-color: #FFAB36;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.profile-not-logged-in button:hover {
+    background-color: #FFAB36;
+}
+
+/* หน้า profile */
+.profile-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    background-color: #f9fafb;
+    padding: 2rem;
+}
+
+.profile-page-avatar {
+    width: 20rem; 
+    height: 20rem;
+    border-radius: 9999px;
+    margin: 0 auto 1rem auto;
+    object-fit: cover;
+    border: 4px solid #707070;
+}
+
+.profile-card h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.profile-card p {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+}
+
+.profile-card button {
+    margin-top: 1rem;
+    padding: 0.75rem 2rem;
+    font-size: 0.85rem;
+    font-weight: light;
+    background-color: #FFAB36;
+    color: #fff;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: none;
+    outline: none;
+}
+
+.profile-card button:hover {
+    background-color: #e68a0b;
+}
+
+
