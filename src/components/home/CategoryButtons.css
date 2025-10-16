@@ -1,0 +1,56 @@
+.category-buttons-container {
+    margin: 2rem 0;
+}
+
+.category-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.category-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.category-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: 2px solid #FFAB36;
+    background-color: #fff;
+    color: #FFAB36;
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.category-btn:hover {
+    background-color: #fff5e6;
+    transform: translateY(-2px);
+}
+
+.category-btn.active {
+    background-color: #FFAB36;
+    color: #fff;
+}
+
+.category-icon {
+    font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .category-buttons {
+        gap: 0.5rem;
+    }
+    
+    .category-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+}

@@ -55,14 +55,14 @@
 /* Auth Buttons (Login & Sign Up) */
 .navbar-auth-buttons {
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
     align-items: center;
 }
 
 .btn-login,
 .btn-signup {
-    padding: 0.6rem 1.5rem;
-    border-radius: 0.5rem;
+    padding: 0.4rem 1.9rem;
+    border-radius: 1.5rem;
     font-weight: 600;
     font-size: 0.95rem;
     text-decoration: none;
@@ -72,23 +72,24 @@
 
 .btn-login {
     background-color: transparent;
-    color: #fff;
+    color: #000;
     border: 2px solid #fff;
 }
 
 .btn-login:hover {
     background-color: #fff;
-    color: #FFAB36;
+    color: #000;
 }
 
 .btn-signup {
-    background-color: #fff;
-    color: #FFAB36;
+    background-color: transparent;
+    color: #000;
     border: 2px solid #fff;
 }
 
 .btn-signup:hover {
-    background-color: #f0f0f0;
+    background-color: #fff;
+    color: #000;
 }
 
 /* Profile Button */
