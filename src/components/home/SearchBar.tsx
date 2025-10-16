@@ -23,7 +23,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
     return (
         <div className="search-bar-container">
             <form className="search-bar" onSubmit={handleSubmit}>
-                {/* Search Type Toggle */}
+                {/* Search Type Toggle 
                 <div className="search-type-toggle">
                     <button
                         type="button"
@@ -40,7 +40,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
                         👤 Account
                     </button>
                 </div>
-
+                    */}
                 {/* Search Input */}
                 <div className="search-input-wrapper">
                     <svg 

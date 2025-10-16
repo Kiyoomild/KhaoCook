@@ -1,5 +1,8 @@
 .category-buttons-container {
     margin: 2rem 0;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .category-title {
@@ -13,6 +16,8 @@
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
 }
 
 .category-btn {

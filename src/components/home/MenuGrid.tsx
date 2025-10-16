@@ -1,5 +1,6 @@
 import React from 'react';
 import MenuCard from './MenuCard';
+import './MenuGrid.css';
 
 interface Menu {
     id: string;

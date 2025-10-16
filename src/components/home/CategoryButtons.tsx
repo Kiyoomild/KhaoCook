@@ -1,4 +1,5 @@
 import React from 'react';
+import './CategoryButtons.css';
 
 interface CategoryButtonsProps {
     activeCategory: string;
@@ -20,7 +21,7 @@ const CategoryButtons: React.FC<CategoryButtonsProps> = ({
     return (
         <div className="category-buttons-container">
             <h2 className="category-title">Categories</h2>
-            <div className="categoty-buttons">
+            <div className="category-buttons">
                 {categories.map(category => (
                     <button
                         key={category.id}

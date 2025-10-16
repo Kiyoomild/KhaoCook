@@ -1,11 +1,14 @@
 .search-bar-container {
-    margin: 2rem 0;
+    margin: 2rem auto;
+    max-width: 900px;
+    padding: 0 1rem;
 }
 
 .search-bar {
     display: flex;
     gap: 1rem;
     align-items: center;
+    justify-content: center;
     flex-wrap: wrap;
 }
 
@@ -45,6 +48,7 @@
 .search-input-wrapper {
     flex: 1;
     min-width: 300px;
+    max-width: 600px;
     position: relative;
     display: flex;
     align-items: center;
@@ -125,6 +129,7 @@
     .search-bar {
         flex-direction: column;
         gap: 0.75rem;
+        max-width: 100%;
     }
     
     .search-type-toggle {
