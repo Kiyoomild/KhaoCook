@@ -4,13 +4,14 @@
     align-items: center;
     background: linear-gradient(135deg, #FFAB36 0%, #e59400 100%);
     padding: 3rem;
-    border-radius: 1.5rem;
-    margin: 3rem 0;
+    border-radius: 1.5rem 1.5rem 0 0;
+    margin: 5rem 0 0 0;
     color: #fff;
 }
 
 .about-content {
     flex: 1;
+    margin: 2rem;
 }
 
 .about-title {
@@ -29,19 +30,13 @@
     flex: 1;
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 
-.about-placeholder {
+.about-logo {
     width: 100%;
     max-width: 400px;
-    height: 250px;
-    background-color: rgba(255, 255, 255, 0.2);
-    border-radius: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.7);
+    height: auto;
 }
 
 @media (max-width: 768px) {

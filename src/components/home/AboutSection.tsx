@@ -1,5 +1,6 @@
 import React from 'react';
 import './AboutSection.css';
+import KhaoCook5 from '../../assets/images/KhaoCook5.png';
 
 const AboutSection: React.FC = () => {
     return (
@@ -13,7 +14,7 @@ const AboutSection: React.FC = () => {
                 </p>
             </div>
             <div className="about-image">
-                <div className="about-placeholder">ส่วนรูปภาพ</div>
+                <img src={KhaoCook5} alt="KhaoCook Logo" className="about-logo" />
             </div>
         </section>
     );

@@ -47,7 +47,7 @@ const Header: React.FC = () => {
                                     <img 
                                         src={user.avatar} 
                                         alt={user.username} 
-                                        className="profile-avatar"
+                                        className="profile-header-avatar"
                                     />
                                 ) : (
                                     <div className="profile-placeholder">
