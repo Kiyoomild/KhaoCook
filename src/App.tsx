@@ -6,6 +6,7 @@ import Header from './components/layout/Header/Header.tsx'
 import LogInPage from './pages/LogInPage/Login.tsx';
 import HomePage from './pages/HomePage/HomePage.tsx';
 import ProfilePage from './pages/ProfilePage/ProfilePage.tsx'
+import MenuDetailPage from './pages/MenuDetailPage/MenuDetailPage.tsx';
 
 const AppContent: React.FC = () => {
     const location = useLocation();
@@ -26,6 +27,7 @@ const AppContent: React.FC = () => {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/my-menus" element={<div>My Menus Page</div>} />
                     <Route path="/settings" element={<div>Settings Page</div>} />
+                    <Route path="/menu/:id" element={<MenuDetailPage />} />
                 </Routes>
             </div>
         </>
