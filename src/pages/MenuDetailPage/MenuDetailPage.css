@@ -59,7 +59,6 @@
 /* Author Section */
 .author-section {
     display: flex;
-    align-items: center;
     margin-bottom: 1.5rem;
     padding: 1rem;
     border-radius: 0.75rem;
@@ -83,16 +82,20 @@
 .menu-image-section {
     width: 100%;
     margin-bottom: 1.5rem;
+    display: flex;            
+    align-items: center;        
+    justify-content: center;      
     border-radius: 1rem;
     overflow: hidden;
 }
 
 .menu-detail-image {
-    width: 100%;
+    width: 60%;                  
     height: auto;
     max-height: 500px;
     object-fit: cover;
     display: block;
+    border-radius: 1rem;  
 }
 
 /* Menu Header */
@@ -116,7 +119,7 @@
 
 /* Favorite Button */
 .favorite-button {
-    width: 100%;
+    width: 40%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -131,6 +134,8 @@
     cursor: pointer;
     transition: all 0.3s;
     margin-bottom: 2rem;
+    margin: 0 auto 2rem auto;
+
 }
 
 .favorite-button:hover {
@@ -338,6 +343,7 @@
     margin: 0;
     color: #4b5563;
     line-height: 1.6;
+    text-align: left;
 }
 
 /* Responsive */

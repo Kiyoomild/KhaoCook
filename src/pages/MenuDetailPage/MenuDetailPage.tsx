@@ -167,126 +167,119 @@ const MenuDetailPage: React.FC = () => {
     }
 
     return (
-        <div className="menu-detail-page">
-            <div className="menu-detail-container">
-                {/* Back Button*/}
-                <button className="back-button" onClick={() => navigate(-1)}>
-                    ← Back
-                </button>
+    <div className="menu-detail-page">
+        <div className="menu-detail-container">
 
-                {/* Author Info */}
-                <div className="author-section">
-                    <img
-                        src={menu.image}
-                        alt={menu.title}
-                        className="menu-detail-image"
-                    />
+            {/* Back Button */}
+            <button className="back-button" onClick={() => navigate(-1)}>
+                ← Back
+            </button>
 
-                {/* Menu Image */}
-                <div className="menu-image-section">
-                    <img 
-                        src={menu.image} 
-                        alt={menu.title}
-                        className="menu-detail-image"
-                    />
-                </div>
-
-                {/* Menu Title & Caption */}
-                <div className="menu-header">
-                    <h1 className="menu-title">{menu.title}</h1>
-                    <p className="menu-caption">{menu.caption}</p>
-                </div>
-
-                {/* Favorite Button */}
-                <button 
-                    className={`favorite-button ${isFavorite ? 'active' : ''}`}
-                    onClick={handleFavorite}
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                    </svg>
-                    <span>{isFavorite ? 'ลบออกจากรายการโปรด' : 'เพิ่มในรายการโปรด'}</span>
-                </button>
-
-                {/* Ingredients Section */}
-                <section className="ingredients-section">
-                    <h2 className="section-title">วัตถุดิบ</h2>
-                    <ul className="ingredients-list">
-                        {menu.ingredients.map((ingredient, index) => (
-                            <li key={index} className="ingredient-item">
-                                <span className="ingredient-bullet">•</span>
-                                <span>{ingredient}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-
-                {/* Steps Section */}
-                <section className="steps-section">
-                    <h2 className="section-title">วิธีทำ</h2>
-                    <ol className="steps-list">
-                        {menu.steps.map((step, index) => (
-                            <li key={index} className="step-item">
-                                <span className="step-number">{index + 1}</span>
-                                <span className="step-text">{step}</span>
-                            </li>
-                        ))}
-                    </ol>
-                </section>
-
-                {/* Comments Section */}
-                <section className="comments-section">
-                    <h2 className="section-title">ความคิดเห็น ({comments.length})</h2>
-                    
-                    {/* Add Comment Form */}
-                    <form className="comment-form" onSubmit={handleAddComment}>
-                        <input
-                            type="text"
-                            className="comment-input"
-                            placeholder={isAuthenticated ? "แสดงความคิดเห็นของคุณ..." : "กรุณาเข้าสู่ระบบเพื่อแสดงความคิดเห็น"}
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            disabled={!isAuthenticated}
-                        />
-                        <button 
-                            type="submit" 
-                            className="comment-submit-btn"
-                            disabled={!isAuthenticated || !newComment.trim()}
-                        >
-                            ส่ง
-                        </button>
-                    </form>
-
-                    {/* Comments List */}
-                    <div className="comments-list">
-                        {comments.length === 0 ? (
-                            <p className="no-comments">ยังไม่มีความคิดเห็น</p>
-                        ) : (
-                            comments.map(comment => (
-                                <div key={comment.id} className="comment-item">
-                                    <img 
-                                        src={comment.userAvatar} 
-                                        alt={comment.username}
-                                        className="comment-avatar"
-                                    />
-                                    <div className="comment-content">
-                                        <div className="comment-header">
-                                            <span className="comment-username">{comment.username}</span>
-                                            <span className="comment-date">
-                                                {new Date(comment.createdAt).toLocaleDateString('th-TH')}
-                                            </span>
-                                        </div>
-                                        <p className="comment-text">{comment.text}</p>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </section>                          
-                </div>
+            {/* Menu Image */}
+            <div className="menu-image-section">
+                <img 
+                    src={menu.image} 
+                    alt={menu.title}
+                    className="menu-detail-image"
+                />
             </div>
+
+            {/* Menu Title & Caption */}
+            <div className="menu-header">
+                <h1 className="menu-title">{menu.title}</h1>
+                <p className="menu-caption">{menu.caption}</p>
+            </div>
+
+
+            {/* Ingredients Section */}
+            <section className="ingredients-section">
+                <h2 className="section-title">วัตถุดิบ</h2>
+                <ul className="ingredients-list">
+                    {menu.ingredients.map((ingredient, index) => (
+                        <li key={index} className="ingredient-item">
+                            <span className="ingredient-bullet">•</span>
+                            <span>{ingredient}</span>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+
+            {/* Steps Section */}
+            <section className="steps-section">
+                <h2 className="section-title">วิธีทำ</h2>
+                <ol className="steps-list">
+                    {menu.steps.map((step, index) => (
+                        <li key={index} className="step-item">
+                            <span className="step-number">{index + 1}</span>
+                            <span className="step-text">{step}</span>
+                        </li>
+                    ))}
+                </ol>
+            </section>
+
+            {/* Favorite Button */}
+            <button 
+                className={`favorite-button ${isFavorite ? 'active' : ''}`}
+                onClick={handleFavorite}
+            >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+                <span>{isFavorite ? 'ลบออกจากรายการโปรด' : 'เพิ่มในรายการโปรด'}</span>
+            </button>
+
+            {/* Comments Section */}
+            <section className="comments-section">
+                <h2 className="section-title">ความคิดเห็น ({comments.length})</h2>
+                
+                {/* Add Comment Form */}
+                <form className="comment-form" onSubmit={handleAddComment}>
+                    <input
+                        type="text"
+                        className="comment-input"
+                        placeholder={isAuthenticated ? "แสดงความคิดเห็นของคุณ..." : "กรุณาเข้าสู่ระบบเพื่อแสดงความคิดเห็น"}
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        disabled={!isAuthenticated}
+                    />
+                    <button 
+                        type="submit" 
+                        className="comment-submit-btn"
+                        disabled={!isAuthenticated || !newComment.trim()}
+                    >
+                        ส่ง
+                    </button>
+                </form>
+
+                {/* Comments List */}
+                <div className="comments-list">
+                    {comments.length === 0 ? (
+                        <p className="no-comments">ยังไม่มีความคิดเห็น</p>
+                    ) : (
+                        comments.map(comment => (
+                            <div key={comment.id} className="comment-item">
+                                <img 
+                                    src={comment.userAvatar} 
+                                    alt={comment.username}
+                                    className="comment-avatar"
+                                />
+                                <div className="comment-content">
+                                    <div className="comment-header">
+                                        <span className="comment-username">{comment.username}</span>
+                                        <span className="comment-date">
+                                            {new Date(comment.createdAt).toLocaleDateString('th-TH')}
+                                        </span>
+                                    </div>
+                                    <p className="comment-text">{comment.text}</p>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </section>
         </div>
-    )
+    </div>
+)
 }
 
 export default MenuDetailPage;

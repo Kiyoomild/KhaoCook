@@ -151,7 +151,7 @@ const ProfilePage: React.FC = () => {
                                     <img src={menu.image} alt={menu.title} className="menu-image" />
                                 </div>
                                 <div className="menu-info">
-                                    <h3 className="menu-title">{menu.title}</h3>
+                                    <h3 className="menu-title-profile">{menu.title}</h3>
                                     <div className="menu-stats">
                                         <span className="menu-username">@{user.username}</span>
                                     </div>
