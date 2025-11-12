@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Hero from '../../components/home/Hero';
 import SearchBar from '../../components/home/SearchBar'
 import CategoryButtons from '../../components/home/CategoryButtons';
 import MenuGrid from '../../components/home/MenuGrid';
 import AboutSection from '../../components/home/AboutSection';
+import type { Recipe } from '../../services/recipeService';
+import { recipeService } from '../../services/recipeService';
 import './HomePage.css';
 
 const mockMenus = [
@@ -70,12 +73,11 @@ const HomePage: React.FC =() => {
   const [ menus, setMenus ] = useState(mockMenus);
   const [ loading, setLoading ] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-    const [searchType, setSearchType] = useState<'menu' | 'account'>('menu');
-
-  useEffect(() => {
-    // TODO: ตรงนี้จะเป็นการเรียก API จริง
-    loadMenus();
-  }, [activeCategory, searchQuery, searchType]);
+  const [searchType, setSearchType] = useState<'menu' | 'account'>('menu');
+  const navigate = useNavigate();
+  // Add type annotation for Recipe[]
+  const [myRecipes, setMyRecipes] = useState<Recipe[]>([]);
+  const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
 
   const loadMenus = async () => {
     setLoading(true);
@@ -116,11 +118,38 @@ const HomePage: React.FC =() => {
     }
   };
 
+  // useEffect สำหรับโหลด Recipes จาก recipeService
+  //ดึงข้อมูลเมื่อเข้าหน้า
+  useEffect(() => {
+    const loadRecipes = () => {
+      const all = recipeService.getAllRecipes();
+      const mine = recipeService.getUserRecipes('Kiyoomild');
+
+      console.log('All Recipes:', all); //เช็คข้อมูล
+      console.log('My Recipes:', mine); //เช็คข้อมูล
+
+      setAllRecipes(all);
+      setMyRecipes(mine);
+    };
+
+    loadRecipes();
+  }, []);
+
+  //useEffect สำหรับโหลดเมนู (mock Data)
+    useEffect(() => {
+      loadMenus(); 
+    }, [activeCategory, searchQuery, searchType]);
+
+
     const handleSearch = (query: string, type: 'menu' | 'account') => {
         setSearchQuery(query);
         setSearchType(type);
         console.log(`Searching for "${query}" in ${type}`);
-  };
+    };
+
+    const handleAddRecipe = () => {
+        navigate('/add-recipe');
+    };
 
   return (
     <div className="home-page">
@@ -156,8 +185,8 @@ const HomePage: React.FC =() => {
           activeCategory={activeCategory}
           onCategoryChange={setActiveCategory}
         />
-                    
-        {/* Menu Grid */}
+
+      {/* Menu Grid */}
         {loading ? (
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -166,7 +195,12 @@ const HomePage: React.FC =() => {
         ) : (
             <MenuGrid menus={menus} />
         )}
-      </div>
+    </div>
+
+      {/* Add Recipe Button */}
+      <button className="add-recipe-btn" onClick={handleAddRecipe}>
+        เพิ่มเมนูอาหาร
+      </button>
               
     </div>
         <AboutSection />

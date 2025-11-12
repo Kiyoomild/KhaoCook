@@ -30,14 +30,13 @@ const mockUserMenus = [
 ]
 
 const ProfilePage: React.FC = () => {
-    const { user, isAuthenticated, logout } = useAuth();
+    const { user, isAuthenticated} = useAuth();
     const navigate = useNavigate();
     const [ activeTab, setActiveTab ] = useState<'recipes' | 'favorite'>('recipes');
     const [ menus, setMenus ] = useState(mockUserMenus)
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
+    const handleAddRecipe = () => {
+        navigate('/add-recipe');
     };
 
     const handleLike = (menuId: string) => {
@@ -184,9 +183,9 @@ const ProfilePage: React.FC = () => {
                     )}
                 </div>
 
-                {/* Logout Button */}
-                <button className="logout-btn" onClick={handleLogout}>
-                    Logout
+                {/* Add Recipe Button */}
+                <button className="add-recipe-btn" onClick={handleAddRecipe}>
+                    เพิ่มเมนูอาหาร
                 </button>
             </div>
             <AboutSection />

@@ -258,12 +258,12 @@
     font-size: 1.1rem;
 }
 
-/* Logout Button */
-.logout-btn {
+/* Add Recipe Button */
+.add-recipe-btn {
     display: block;
     margin: 3rem auto 0;
-    padding: 0.75rem 3rem;
-    background-color: #ef4444;
+    padding: 1rem 3rem;
+    background-color: #FFAB36;
     color: #fff;
     border: none;
     border-radius: 0.5rem;
@@ -273,8 +273,8 @@
     transition: all 0.3s;
 }
 
-.logout-btn:hover {
-    background-color: #dc2626;
+.add-recipe-btn:hover {
+    background-color: #e59400;
     transform: translateY(-2px);
 }
 

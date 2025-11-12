@@ -7,6 +7,7 @@ import LogInPage from './pages/LogInPage/Login.tsx';
 import HomePage from './pages/HomePage/HomePage.tsx';
 import ProfilePage from './pages/ProfilePage/ProfilePage.tsx'
 import MenuDetailPage from './pages/MenuDetailPage/MenuDetailPage.tsx';
+import AddRecipe from './pages/AddRecipe/AddRecipe.tsx';
 
 const AppContent: React.FC = () => {
     const location = useLocation();
@@ -28,6 +29,7 @@ const AppContent: React.FC = () => {
                     <Route path="/my-menus" element={<div>My Menus Page</div>} />
                     <Route path="/settings" element={<div>Settings Page</div>} />
                     <Route path="/menu/:id" element={<MenuDetailPage />} />
+                    <Route path="/add-recipe" element={<AddRecipe />} />
                 </Routes>
             </div>
         </>
