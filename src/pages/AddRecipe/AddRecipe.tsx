@@ -147,14 +147,16 @@ export default function AddRecipe() {
             createdAt: new Date().toISOString(), // Add a timestamp
         };
 
+        recipeService.addRecipe(newRecipe)
+
+        console.log('New Recipe:', newRecipe)
         console.log('Form Data:', formData);
         console.log('Image:', image);
-        alert('เพิ่มสูตรอาหารเรียบร้อยแล้ว!');
-
+        //alert('เพิ่มสูตรอาหารเรียบร้อยแล้ว!');
+        
         // กลับไปหน้า Home
         navigate('/');
     };
-
 
 
     return (

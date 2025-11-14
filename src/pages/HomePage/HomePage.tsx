@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Hero from '../../components/home/Hero';
 import SearchBar from '../../components/home/SearchBar'
 import CategoryButtons from '../../components/home/CategoryButtons';
@@ -75,13 +75,33 @@ const HomePage: React.FC =() => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchType, setSearchType] = useState<'menu' | 'account'>('menu');
   const navigate = useNavigate();
-  // Add type annotation for Recipe[]
+  const location = useLocation();
   const [myRecipes, setMyRecipes] = useState<Recipe[]>([]);
-  const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
+  //const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
+  const currentUser = localStorage.getItem('username') || 'Kiyoomild';
 
   const loadMenus = async () => {
     setLoading(true);
     try{
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      //ดึงข้อมูลจาก recipeService แทน mockMenus
+      const recipesFromStorage = recipeService.getAllRecipes();
+      //setAllRecipes(recipesFromStorage)
+
+      // รวม mockMenus กับเมนูใหม่
+      const userRecipes = recipesFromStorage.map(recipe => ({
+        id: recipe.id,
+        title: recipe.title,
+        image: recipe.image,
+        author: recipe.userId,
+        authorAvatar: '',
+        description: recipe.description,
+        isUserRecipe: true,
+      }));
+
+      // รวมเมนูที่เพิ่มใหม่ไว้ด้านบน แล้วตามด้วย mockMenus
+      const allMenus = [...userRecipes, ...mockMenus.map(m => ({ ...m, isUserRecipe: false }))];
       // TODO: เรียก API จริง
       // if (searchQuery) {
       //     if (searchType === 'menu') {
@@ -96,20 +116,18 @@ const HomePage: React.FC =() => {
       //     const data = await menuService.getMenus(activeCategory);
       //     setMenus(data);
       // }
-            
-      // ตอนนี้ใช้ mock data
-      await new Promise(resolve => setTimeout(resolve, 500));
       
       // จำลองการค้นหา
-      if (searchQuery) {
-        const filtered = mockMenus.filter(menu => 
+      if (searchQuery.trim() !== '') {
+        const lowerQuery = searchQuery.toLowerCase();
+        const filtered = allMenus.filter(menu => 
           searchType === 'menu' 
-            ? menu.title.toLowerCase().includes(searchQuery.toLowerCase())
-            : menu.author.toLowerCase().includes(searchQuery.toLowerCase())
+            ? menu.title.toLowerCase().includes(lowerQuery)
+            : menu.author.toLowerCase().includes(lowerQuery)
         );
         setMenus(filtered);
       } else {
-          setMenus(mockMenus);
+          setMenus(allMenus);
       }
     } catch (error) {
         console.error('Error loading menus:', error);
@@ -118,27 +136,42 @@ const HomePage: React.FC =() => {
     }
   };
 
-  // useEffect สำหรับโหลด Recipes จาก recipeService
-  //ดึงข้อมูลเมื่อเข้าหน้า
+  //ฟังก์ชันลบเมนู
+  const handleDeleteRecipe = (recipeId: string, author: string) => {
+    //ตรวจสอบว่าเป็นเมนูของ user คนนี้หรือไม่
+    if (author !== currentUser) {
+      alert('คุณไม่สามารถลบเมนูของคนอื่นได้');
+      return;
+    }
+
+    //ยืนยันการลบ
+    if (window.confirm('คุณต้องการลบเมนูนี้หรือไม่?')){
+      const success = recipeService.deleteRecipe(recipeId);
+
+      if (success) {
+        alert('ลบเมนูเรียบร้อยแล้ว');
+        //รีโหลดเมนู
+        loadMenus();
+        //Refresh myRecipes
+        const mine = recipeService.getUserRecipes(currentUser);
+        setMyRecipes(mine);
+      } else {
+        alert('ไม่สามารถลบเมนูได้ กรุณาลองใหม่อีกครั้ง');
+      }
+    }
+  };
+
+  // useEffect สำหรับโหลดเมนูเมื่อเข้าหน้าหรือมีการเปลี่ยนแปลง
   useEffect(() => {
-    const loadRecipes = () => {
-      const all = recipeService.getAllRecipes();
-      const mine = recipeService.getUserRecipes('Kiyoomild');
-
-      console.log('All Recipes:', all); //เช็คข้อมูล
-      console.log('My Recipes:', mine); //เช็คข้อมูล
-
-      setAllRecipes(all);
-      setMyRecipes(mine);
-    };
-
-    loadRecipes();
-  }, []);
+    const mine = recipeService.getUserRecipes(currentUser);
+    console.log('My Recipes:', mine);
+    setMyRecipes(mine);
+  }, [currentUser, location.state])
 
   //useEffect สำหรับโหลดเมนู (mock Data)
     useEffect(() => {
       loadMenus(); 
-    }, [activeCategory, searchQuery, searchType]);
+    }, [activeCategory, searchQuery, searchType, myRecipes]);
 
 
     const handleSearch = (query: string, type: 'menu' | 'account') => {
@@ -148,8 +181,14 @@ const HomePage: React.FC =() => {
     };
 
     const handleAddRecipe = () => {
-        navigate('/add-recipe');
+      navigate('/add-recipe');
     };
+
+    useEffect(() => {
+      if (location.state?.refresh) {
+        loadMenus();
+      }
+    }, [location.state])
 
   return (
     <div className="home-page">
@@ -193,7 +232,11 @@ const HomePage: React.FC =() => {
             <p>กำลังโหลดเมนู...</p>
           </div>
         ) : (
-            <MenuGrid menus={menus} />
+            <MenuGrid 
+              menus={menus} 
+              currentUser={currentUser}
+              onDelete={handleDeleteRecipe}
+            />
         )}
     </div>
 

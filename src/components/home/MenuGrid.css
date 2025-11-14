@@ -12,6 +12,40 @@
     font-size: 1.1rem;
 }
 
+.delete-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.menu-card:hover .delete-btn {
+  opacity: 100;
+}
+
+.delete-btn:hover {
+  background-color: rgba(255, 59, 48, 1);
+  transform: scale(1.1);
+}
+
+.delete-btn:active {
+  transform: scale(0.95);
+}
+
 @media (max-width: 768px) {
     .menu-grid {
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));

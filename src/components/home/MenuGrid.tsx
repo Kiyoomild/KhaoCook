@@ -8,13 +8,17 @@ interface Menu {
     title: string;
     author: string;
     authorAvatar?: string;
+    description?: string;
+    isUserRecipe?: boolean;
 }
 
 interface MenuGridProps {
     menus: Menu[];
+    currentUser?: string;
+    onDelete?: (recipeId: string, author: string) => void;
 }
 
-const MenuGrid: React.FC<MenuGridProps> = ({ menus }) => {
+const MenuGrid: React.FC<MenuGridProps> = ({ menus, currentUser, onDelete }) => {
     if (menus.length === 0) {
         return (
             <div className="menu-grid-empty">
@@ -33,6 +37,9 @@ const MenuGrid: React.FC<MenuGridProps> = ({ menus }) => {
                     title={menu.title}
                     author={menu.author}
                     authorAvatar={menu.authorAvatar}
+                    description={menu.description}
+                    currentUser={currentUser}
+                    onDelete={onDelete}
                 />
             ))}
         </div>

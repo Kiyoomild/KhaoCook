@@ -8,6 +8,9 @@ interface MenuCardProps {
     title: string;
     author: string;
     authorAvatar?: string;
+    description?: string;
+    currentUser?: string;
+    onDelete?: (recipeId: string, author: string) => void;
 }
 
 const MenuCard: React.FC<MenuCardProps> = ({
@@ -15,7 +18,9 @@ const MenuCard: React.FC<MenuCardProps> = ({
     image,
     title,
     author,
-    authorAvatar
+    authorAvatar,
+    currentUser,
+    onDelete
 }) => {
     const navigate = useNavigate();
 
@@ -23,11 +28,27 @@ const MenuCard: React.FC<MenuCardProps> = ({
         navigate(`/menu/${id}`);
     };
 
+    const handleDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onDelete) {
+            onDelete(id, author);
+        }
+    };
+
     return (
         <div className="menu-card" onClick={handleClick}>
             <div className="menu-card-image-wrapper">
                 <img src={image} alt={title} className="menu-card-image" />
             </div>
+            {currentUser && author === currentUser && onDelete && (
+                    <button
+                        className="delete-btn"
+                        onClick={handleDelete}
+                        title="ลบเมนูนี้"
+                    >
+                        🗑️
+                    </button>
+                )}
             <div className="menu-card-content">
                 <h3 className="menu-card-title">{title}</h3>
                 <div className="menu-card-author">
@@ -40,6 +61,8 @@ const MenuCard: React.FC<MenuCardProps> = ({
                     )}
                     <span className="author-name">{author}</span>
                 </div>
+
+                
             </div>
         </div>
     );
