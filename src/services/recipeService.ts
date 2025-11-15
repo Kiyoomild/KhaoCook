@@ -5,6 +5,7 @@ export type Recipe = {
   description: string;
   image: string;
   userId: string;
+  authorAvatar?: string;
   createdAt?: string;
 };
 

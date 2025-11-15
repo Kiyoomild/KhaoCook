@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import './AddRecipe.css';
+import { userService } from '../../services/userService';
 import { recipeService } from "../../services/recipeService";
 //import Header from "../../components/layout/Header/Header"
 
@@ -137,25 +138,31 @@ export default function AddRecipe() {
             return;
         }
 
+        //ดึง Username  จาก localStorage
+        const currentUser = localStorage.getItem('username') || 'Kiyoomild';
+
+        // ดึง avatar จาก localStorage (ถ้ามี) หรือใช้รุปภาพเริ่มต้น
+        const userAvatar = userService.getUserAvatar(currentUser); // ใช้ userService
+        
         // สร้าง id และ createdAt สำหรับเมนูใหม่
         const newRecipe = {
-            id: Date.now().toString(), // Generate a unique ID
+            id: Date.now().toString(),
             title: formData.name,
             description: `หมวดหมู่: ${formData.category}\n\nส่วนผสม:\n${formData.ingredients}\n\nวิธีทำ:\n${formData.steps}`,
-            image: image || '', // ใช้ image state ที่มีอยู่
-            userId: 'Kiyoomild', // ดึงจาก auth context หรือ localStorage
-            createdAt: new Date().toISOString(), // Add a timestamp
+            image: image || '',
+            userId: currentUser,
+            authorAvatar: userAvatar,
         };
 
-        recipeService.addRecipe(newRecipe)
+        const createRecipe = recipeService.addRecipe(newRecipe)
 
-        console.log('New Recipe:', newRecipe)
+        console.log('New Recipe:', createRecipe)
         console.log('Form Data:', formData);
         console.log('Image:', image);
         //alert('เพิ่มสูตรอาหารเรียบร้อยแล้ว!');
         
         // กลับไปหน้า Home
-        navigate('/');
+        navigate('/', { state: { refresh: Date.now() } });
     };
 
 

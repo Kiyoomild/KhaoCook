@@ -8,13 +8,14 @@ interface User {
     username: string;
     email: string;
     avatar?: string;
+    avatarURL?: string;
 }
 
 interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
-    login: (email: string, password: string) => Promise<void>;
-    signup: (username: string, email: string, password: string) => Promise<void>;
+    login: (email: string, password: string) => Promise<User | null>;
+    signup: (username: string, email: string, password: string) => Promise<User | null>;
     logout: () => void;
 }
 
@@ -34,7 +35,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     //ในฟังก์ชัน login และ signup มีพารามิเตอร์ password แต่ยังไม่ได้ใช้งานจริง (เพราะตอนนี้ใช้ mock data อยู่)
-    const login = async (email: string, _password: string): Promise<void> => {
+    const login = async (email: string, _password: string): Promise<User | null> => {
         try {
              // TODO: เรียก API จริงตรงนี้
             // const response = await authService.login(email, password);
@@ -43,21 +44,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const mockUser: User = {
                 id: '1',
                 username: 'Kiyoomild',
-                email: email,
-                avatar: 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg' // หรือใช้รูปจริง
+                email,
+                avatarURL: 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg' // หรือใช้รูปจริง
         };
 
             setUser(mockUser);
             setIsAuthenticated(true);
             localStorage.setItem('user', JSON.stringify(mockUser));
             localStorage.setItem('token', 'mock-token-12345'); // เก็บ token 
+
+            return mockUser;
         }  catch (error) {
             console.error('Login failed: ', error);
-            throw error;
+            return null;
         }
     };
 
-    const signup = async (username: string, email: string, _password: string): Promise<void> => {
+    const signup = async (username: string, email: string, _password: string): Promise<User | null> => {
         try {
             // TODO: เรียก API จริงตรงนี้
             // const response = await authService.signup(username, email, password);
@@ -65,8 +68,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // Mock data สำหรับทดสอบ
             const mockUser: User = {
                 id: '2',
-                username: username,
-                email: email,
+                username,
+                email,
                 avatar: 'https://via.placeholder.com/150'
         };
 
@@ -74,9 +77,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setIsAuthenticated(true);
             localStorage.setItem('user', JSON.stringify(mockUser));
             localStorage.setItem('token', 'mock-token-67890');
+
+            return mockUser;
         } catch (error) {
             console.error('Signup failed: ', error);
-            throw error;
+            return null;
         }
     };
 

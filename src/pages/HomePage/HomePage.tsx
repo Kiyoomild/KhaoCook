@@ -7,6 +7,7 @@ import MenuGrid from '../../components/home/MenuGrid';
 import AboutSection from '../../components/home/AboutSection';
 import type { Recipe } from '../../services/recipeService';
 import { recipeService } from '../../services/recipeService';
+import { userService } from '../../services/userService';
 import './HomePage.css';
 
 const mockMenus = [
@@ -79,6 +80,7 @@ const HomePage: React.FC =() => {
   const [myRecipes, setMyRecipes] = useState<Recipe[]>([]);
   //const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
   const currentUser = localStorage.getItem('username') || 'Kiyoomild';
+  //const currentUserAvatar = localStorage.getItem('avatar') || '';
 
   const loadMenus = async () => {
     setLoading(true);
@@ -95,7 +97,7 @@ const HomePage: React.FC =() => {
         title: recipe.title,
         image: recipe.image,
         author: recipe.userId,
-        authorAvatar: '',
+        authorAvatar: recipe.authorAvatar || userService.getUserAvatar(recipe.userId), // ใช้ userService
         description: recipe.description,
         isUserRecipe: true,
       }));
@@ -127,7 +129,7 @@ const HomePage: React.FC =() => {
         );
         setMenus(filtered);
       } else {
-          setMenus(allMenus);
+        setMenus(allMenus);
       }
     } catch (error) {
         console.error('Error loading menus:', error);

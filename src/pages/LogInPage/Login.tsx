@@ -1,6 +1,7 @@
 import { useState} from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext'
+import { userService } from '../../services/userService'
 import KhaoCook5 from '../../assets/images/KhaoCook5.png'
 import './Login.css'
 
@@ -19,10 +20,31 @@ const LoginPage: React.FC = () => {
         setLoading(true);
 
         try {
-            await login(email, password);
-            navigate('/'); // ไปหน้าแรกหลังจากล็อกอินสำเร็จ
+            const user = await login(email, password);
+            const username = user?.username ?? email;
+
+            // ดึง avatar จาก userService
+            let avatar = user?.avatarURL;
+            if (!avatar) {
+                avatar = userService.getUserAvatar(username);
+            }
+
+            localStorage.setItem('username', username);
+            localStorage.setItem('userAvatar', avatar);
+
+            const existingUser = userService.getUserByUsername(username);
+            if (!existingUser) {
+                userService.addUser({
+                    username: username,
+                    avatar: avatar,
+                    email: email
+                });
+            }
+
+            console.log('Login successful:', { username, avatar });
+            navigate('/');
         } catch (err) {
-            setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+            setError('เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่านอีกครั้ง');
         } finally {
             setLoading(false);
         }
