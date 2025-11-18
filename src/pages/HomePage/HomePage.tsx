@@ -78,9 +78,7 @@ const HomePage: React.FC =() => {
   const navigate = useNavigate();
   const location = useLocation();
   const [myRecipes, setMyRecipes] = useState<Recipe[]>([]);
-  //const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
-  const currentUser = localStorage.getItem('username') || 'Kiyoomild';
-  //const currentUserAvatar = localStorage.getItem('avatar') || '';
+  const [currentUser] = useState('Kiyoomild'); //TODO: ดึงจาก AuthContext
 
   const loadMenus = async () => {
     setLoading(true);
@@ -104,20 +102,22 @@ const HomePage: React.FC =() => {
 
       // รวมเมนูที่เพิ่มใหม่ไว้ด้านบน แล้วตามด้วย mockMenus
       const allMenus = [...userRecipes, ...mockMenus.map(m => ({ ...m, isUserRecipe: false }))];
-      // TODO: เรียก API จริง
-      // if (searchQuery) {
-      //     if (searchType === 'menu') {
-      //         const data = await menuService.searchMenus(searchQuery, activeCategory);
-      //         setMenus(data);
-      //     } else {
-      //         // ค้นหา account และแสดงเมนูของ account นั้น
-      //         const data = await menuService.getMenusByUser(searchQuery);
-      //         setMenus(data);
-      //     }
-      // } else {
-      //     const data = await menuService.getMenus(activeCategory);
-      //     setMenus(data);
-      // }
+      
+      {/*TODO: เรียก API จริง
+       if (searchQuery) {
+           if (searchType === 'menu') {
+               const data = await menuService.searchMenus(searchQuery, activeCategory);
+               setMenus(data);
+           } else {
+               // ค้นหา account และแสดงเมนูของ account นั้น
+               const data = await menuService.getMenusByUser(searchQuery);
+               setMenus(data);
+           }
+       } else {
+           const data = await menuService.getMenus(activeCategory);
+           setMenus(data);
+      }
+      */}
       
       // จำลองการค้นหา
       if (searchQuery.trim() !== '') {

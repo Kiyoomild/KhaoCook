@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../contexts/AuthContext'
+import { userService } from '../../../services/userService'
 import KhaoCook5 from '../../../assets/images/KhaoCook5.png'
 import './Header.css'
 
@@ -8,6 +9,14 @@ const Header: React.FC = () => {
     const { user, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
+    const [userAvatar, setUserAvatar] = useState<string>('');
+
+    useEffect(() => {
+        if (user?.username) {
+            const avatar = userService.getUserAvatar(user.username);
+            setUserAvatar(avatar);
+        }
+    }, [user]);
 
     const handleLogout = () => {
         logout();
@@ -18,6 +27,23 @@ const Header: React.FC = () => {
     const toggleDropdown = () => {
         setShowDropdown(!showDropdown);
     };
+
+    // ปิด dropdown เมื่อคลิกข้างนอก
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (!target.closest('.navbar-profile')) {
+                setShowDropdown(false);
+            }
+        };
+
+        if (showDropdown) {
+            document.addEventListener('click', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+        }  ;
+    }, [showDropdown]);
 
     return (
         <header className="navbar">
@@ -43,24 +69,32 @@ const Header: React.FC = () => {
                         // ถ้าล็อกอินแล้ว - แสดงรูปโปรไฟล์
                         <div className="navbar-profile">
                             <button className="profile-button" onClick={toggleDropdown}>
-                                {user?.avatar ? (
                                     <img 
-                                        src={user.avatar} 
-                                        alt={user.username} 
+                                        src={userAvatar || user?.avatarURL || user?.avatar || 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg'} 
+                                        alt={user?.username || 'User'} 
                                         className="profile-header-avatar"
+                                        onError={(e) => {
+                                            //ถ้ารูปโหลดไม่ได้ ใช้รูป default
+                                            (e.target as HTMLImageElement).src = 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg'
+                                        }}
                                     />
-                                ) : (
-                                    <div className="profile-placeholder">
-                                        {user?.username.charAt(0).toUpperCase()}
-                                    </div>
-                                )}
                             </button>
 
                             {/* Dropdown Menu */}
                             {showDropdown && (
                                 <div className="dropdown-menu">
                                     <div className="dropdown-header">
-                                        <p className="dropdown-username">{user?.username}</p>
+                                        <div className="dropdown-avatar-wrapper">
+                                            <img 
+                                                src={userAvatar || user?.avatarURL || user?.avatar || 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg'}
+                                                alt={user?.username || 'User'}
+                                                className="dropdown-avatar"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).src = 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg';
+                                                }}
+                                            />
+                                        </div>
+                                        <p className="dropdown-username">@{user?.username}</p>
                                         <p className="dropdown-email">{user?.email}</p>
                                     </div>
                                     <div className="dropdown-divider"></div>
@@ -103,7 +137,7 @@ const Header: React.FC = () => {
                 </div>
             </div>
         </header>
-    )
-}
+    );
+};
 
-export default Header
+export default Header;

@@ -5,8 +5,6 @@ export interface User {
   email?: string;
 }
 
-const USERS_KEY = 'users';
-
 // Mock users data เริ่มต้น
 const defaultUsers: User[] = [
   {
@@ -31,75 +29,71 @@ const defaultUsers: User[] = [
   }
 ];
 
-function loadUsers(): User[] {
-  const data = localStorage.getItem(USERS_KEY);
-  if (!data) {
-    // ถ้ายังไม่มีข้อมูล ให้ save default users
-    saveUsers(defaultUsers);
-    return defaultUsers;
-  }
-  return JSON.parse(data);
-}
-
-function saveUsers(users: User[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
+let userData: User[] = [...defaultUsers];
 
 export const userService = {
-  // ดึงข้อมูล user ทั้งหมด
-  getAllUsers: (): User[] => loadUsers(),
-
-  // ดึงข้อมูล user คนนั้น
-  getUserByUsername: (username: string): User | undefined => {
-    const users = loadUsers();
-    return users.find(u => u.username.toLowerCase() === username.toLowerCase());
+  //ดึงข้อมูล user ทั้งหมด
+  getAllUsers: (): User[] => {
+    return [...userData]; // return copy เพื่อป้องกันการแก้ไขโดยตรง
   },
 
-  // ดึง avatar ของ user (ถ้าไม่เจอใช้ default)
+  //ดึงข้อมูล User คนนั้น
+  getUserByUsername: (username: string): User | undefined => {
+    return userData.find(u => u.username.toLowerCase() === username.toLowerCase());
+  },
+
+  //ดึง Avatar ของ User (ถ้าไม่เจอ ใช้ default)
   getUserAvatar: (username: string): string => {
     const user = userService.getUserByUsername(username);
-    // Default avatar ถ้าไม่เจอ user
+    //Default avatar
     return user?.avatar || 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg';
   },
 
-  // เพิ่ม user ใหม่
+  //เพิ่ม User ใหม่
   addUser: (user: User): void => {
-    const users = loadUsers();
-    const existingUser = users.find(u => u.username.toLowerCase() === user.username.toLowerCase());
-    
+    const existingUser = userData.find(u => u.username.toLowerCase() === user.username.toLowerCase());
+
     if (!existingUser) {
-      users.push(user);
-      saveUsers(users);
+      userData.push(user);
       console.log('User added:', user);
     } else {
       console.log('User already exists:', user.username);
     }
   },
 
-  // อัพเดท avatar
+  //Update avatar
   updateUserAvatar: (username: string, avatar: string): boolean => {
-    const users = loadUsers();
-    const userIndex = users.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
-    
+    const userIndex = userData.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+
     if (userIndex === -1) {
       console.log('User not found:', username);
       return false;
     }
-    
-    users[userIndex].avatar = avatar;
-    saveUsers(users);
-    console.log('Avatar updated for:', username);
+    userData[userIndex].avatar = avatar;
+    console.log('Avatar update for:', username);
     return true;
   },
 
-  // ลบ user (ถ้าต้องการ)
+  //ลบ User
   deleteUser: (username: string): boolean => {
-    const users = loadUsers();
-    const filteredUsers = users.filter(u => u.username.toLowerCase() !== username.toLowerCase());
-    
-    if (filteredUsers.length === users.length) return false;
-    
-    saveUsers(filteredUsers);
-    return true;
+    const initialLength = userData.length;
+    userData = userData.filter(u => u. username.toLowerCase() !== username.toLowerCase());
+
+    const deleted = userData.length !== initialLength;
+    if (deleted) {
+      console.log('User delete:', username);
+    }
+    return deleted;
+  },
+
+  //Reset ข้อมูลกลับเป็น Default
+  resetUsers: (): void => {
+    userData = [...defaultUsers];
+    console.log('Users reset to default');
+  },
+
+  //ดูจำนวน user ปัจจุบัน
+  getUserCount: (): number => {
+    return userData.length;
   }
 };

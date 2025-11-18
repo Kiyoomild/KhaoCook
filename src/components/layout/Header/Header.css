@@ -2,7 +2,7 @@
     width: 100%;
     background-color: #FFAB36;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    /*position: fixed;*/
+    position: fixed;
     top: 0;
     left: 0;
     z-index: 1000;
@@ -229,6 +229,45 @@
 .dropdown-itemlogout:hover {
     background-color: #ef4444;
     color: #fff;
+}
+
+/* Avatar ใน Dropdown */
+.dropdown-avatar-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.dropdown-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.dropdown-header {
+    text-align: center;
+    padding: 16px;
+}
+
+.dropdown-username {
+    font-weight: 600;
+    font-size: 16px;
+    color: #2c3e50;
+    margin: 8px 0 4px 0;
+}
+
+.dropdown-email {
+    font-size: 13px;
+    color: #565a5a;
+    margin: 0;
+}
+
+/* ลบ profile-placeholder ออก (ไม่ใช้แล้ว) */
+.profile-placeholder {
+    display: none;
 }
 
 /* Responsive */

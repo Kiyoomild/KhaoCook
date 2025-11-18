@@ -21,15 +21,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+//เก็บข้อมูล auth ใน memory แทน localStorage
+let currentAuthUser: User | null = null;
+let authToken: string | null = null;
 
-    // ตรวจสอบว่ามี user ใน localStorage หรือไม่เมื่อ component mount
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const [user, setUser] = useState<User | null>(currentAuthUser);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!currentAuthUser);
+
+    // โหลดข้อมูล user จาก memory เมื่อ component ถูก mount
     useEffect(() => {
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-            setUser(JSON.parse(savedUser));
+        if (currentAuthUser) {
+            setUser(currentAuthUser);
             setIsAuthenticated(true);
         }
     }, []);
@@ -48,10 +51,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 avatarURL: 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg' // หรือใช้รูปจริง
         };
 
+            //บันทุกใน Memory
+            currentAuthUser = mockUser;
+            authToken = 'mock-token=12345';
+            
             setUser(mockUser);
             setIsAuthenticated(true);
-            localStorage.setItem('user', JSON.stringify(mockUser));
-            localStorage.setItem('token', 'mock-token-12345'); // เก็บ token 
 
             return mockUser;
         }  catch (error) {
@@ -73,10 +78,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 avatar: 'https://via.placeholder.com/150'
         };
 
+            currentAuthUser = mockUser;
+            authToken = 'mock-token-67890';
             setUser(mockUser);
             setIsAuthenticated(true);
-            localStorage.setItem('user', JSON.stringify(mockUser));
-            localStorage.setItem('token', 'mock-token-67890');
 
             return mockUser;
         } catch (error) {
@@ -86,10 +91,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const logout = (): void => {
+        //ลบข้อมูลใน memory
+        currentAuthUser = null;
+        authToken = null;
+
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
     };
 
     return (
@@ -107,3 +114,7 @@ export const useAuth = (): AuthContextType => {
     }
     return context;
 };
+
+// 🆕 Helper function สำหรับเข้าถึง current user (สำหรับ service อื่นๆ)
+export const getCurrentUser = (): User | null => currentAuthUser;
+export const getAuthToken = (): string | null => authToken;

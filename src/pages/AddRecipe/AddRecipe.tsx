@@ -19,6 +19,7 @@ export default function AddRecipe() {
     });
     const [ image, setImage ] = useState<string | null>(null);
     const [ isUploading, setIsUploading ] = useState(false);
+    const [currentUser] = useState('Kiyoomild'); //ใช้ state แทน localStorage 
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -78,30 +79,6 @@ export default function AddRecipe() {
         });
     }
 
-    { /*const handleImageClick = () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = (e: Event) => {
-            const file = (e.target as HTMLInputElement).files?.[0];
-            if (file) {
-                // Resize the selected image before setting it to state
-                resizeImage(file, 800, 800)
-                    .then((dataUrl) => setImage(dataUrl))
-                    .catch(() => {
-                        // fallback to original file if resizing fails
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            setImage(event.target?.result as string);
-                        };
-                        reader.readAsDataURL(file);
-                    });
-            }
-        };
-        input.click();
-    };
-    */}
-
     const handleImageClick = () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -127,7 +104,7 @@ export default function AddRecipe() {
             }
         };
         input.click();
-    }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -138,11 +115,8 @@ export default function AddRecipe() {
             return;
         }
 
-        //ดึง Username  จาก localStorage
-        const currentUser = localStorage.getItem('username') || 'Kiyoomild';
-
-        // ดึง avatar จาก localStorage (ถ้ามี) หรือใช้รุปภาพเริ่มต้น
-        const userAvatar = userService.getUserAvatar(currentUser); // ใช้ userService
+        //ดึง avatar ของ user นี้
+        const userAvatar = userService.getUserAvatar(currentUser);
         
         // สร้าง id และ createdAt สำหรับเมนูใหม่
         const newRecipe = {
@@ -154,12 +128,11 @@ export default function AddRecipe() {
             authorAvatar: userAvatar,
         };
 
-        const createRecipe = recipeService.addRecipe(newRecipe)
+        recipeService.addRecipe(newRecipe);
 
-        console.log('New Recipe:', createRecipe)
+        console.log('New Recipe:', newRecipe)
         console.log('Form Data:', formData);
         console.log('Image:', image);
-        //alert('เพิ่มสูตรอาหารเรียบร้อยแล้ว!');
         
         // กลับไปหน้า Home
         navigate('/', { state: { refresh: Date.now() } });

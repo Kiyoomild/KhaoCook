@@ -20,7 +20,7 @@ const AppContent: React.FC = () => {
     return (
         <>
             {shouldShowHeader && <Header />}
-            <div className="main-content">
+            <div className={`main-content ${shouldShowHeader ? 'with-header' : ''}`}>
                 <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/login" element={<LogInPage />} />

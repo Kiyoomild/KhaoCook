@@ -4,3 +4,7 @@
   text-align: center;
 }
 
+.with-header {
+  padding-top: 70px; /* สูงตาม Header ของคุณ */
+}
+

@@ -9,72 +9,83 @@ export type Recipe = {
   createdAt?: string;
 };
 
-const STORAGE_KEY = "recipes";
-
-function loadRecipes(): Recipe[] {
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : [];
-}
-
-function saveRecipes(recipes: Recipe[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
-}
+let recipesData: Recipe[] = [];
 
 export const recipeService = {
-  getAllRecipes: (): Recipe[] => loadRecipes(),
-
-  getUserRecipes: (username: string): Recipe[] =>
-    loadRecipes().filter(r => r.userId === username),
-
-  getRecipeById: (recipeId: string): Recipe | undefined => {
-    const recipes = loadRecipes();
-    return recipes.find(r => r.id === recipeId);
+  //ดึงข้อมูลสูตรอาหารทั้งหมด
+  getAllRecipes: (): Recipe[] => {
+    return [...recipesData]; // return copy
   },
 
-  addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt'>): Recipe => {
-    const recipes = loadRecipes();
+  //ดึงข้อมูลสูตรอาหารของ User คนนั้น
+  getUserRecipes: (userId: string): Recipe[] => {
+    return recipesData.filter(recipe => recipe.userId === userId);
+  },
+
+  //ดึงสูตรอาหารเดียว
+  getRecipeById: (id: string): Recipe | undefined => {
+    return recipesData.find(recipe => recipe.id === id);
+  },
+
+  //เพิ่มสูตรอาหารใหม่
+  addRecipe: (recipe: Recipe): Recipe => {
     const newRecipe: Recipe = {
       ...recipe,
-      id: Date.now().toString(),
       createdAt: new Date().toISOString()
     };
-    const newRecipes = [newRecipe, ...recipes];
-    saveRecipes(newRecipes);
+    recipesData.push(newRecipe);
+    console.log('Recipe added:', newRecipe);
+    console.log('Total recipes:', recipesData.length);
     return newRecipe;
   },
 
-  //แก้ไขเมนู
-  updateRecipe: (recipeId: string, updates: Partial<Recipe>): Recipe | null => {
-    const recipes = loadRecipes();
-    const index = recipes.findIndex(r => r.id === recipeId)
+  //Update เมนู
+  updateRecipe: (id: string, updates: Partial<Recipe>): boolean => {
+    const index = recipesData.findIndex(recipe => recipe.id === id);
 
-    if (index === -1) return null;
+    if (index === -1) {
+      console.log('Recipe not found:', id);
+      return false;
+    }
 
-    recipes[index] = { ...recipes[index], ...updates };
-    saveRecipes(recipes);
-    return recipes[index];
-  },
-
-  //ลบเมนู
-  deleteRecipe: (recipeId: string): boolean => {
-    const recipes = loadRecipes();
-    const filteredRecipes = recipes.filter(r => r.id !== recipeId);
-
-    if (filteredRecipes.length === recipes.length) return false;
-
-    saveRecipes(filteredRecipes);
+    recipesData[index] = {
+      ...recipesData[index],
+      ...updates
+    };
+    console.log('Recipe updated:', recipesData[index]);
     return true;
   },
 
-  //ลบเมนูของ User คนนั้น (เผื่อใช้ตอนลบ account)
-  deleteUserRecipes: (username: string): number => {
-    const recipes = loadRecipes();
-    const filteredRecipes = recipes.filter(r => r.userId !== username);
-    const deletedCount = recipes.length - filteredRecipes.length;
+  //ลบเมนู
+  deleteRecipe: (id: string): boolean => {
+    const initialLength = recipesData.length;
+    recipesData = recipesData.filter(recipe => recipe.id !== id);
 
-    saveRecipes(filteredRecipes);
-    return deletedCount;
+    const deleted = recipesData.length !== initialLength;
+    if (deleted) {
+      console.log('Recipe deleted:', id);
+      console.log('Remaining recipes:', recipesData.length);
+    }
+    return deleted;
   },
 
-  clearAll: () => localStorage.removeItem(STORAGE_KEY),
+  //ค้นหสูตรอาหาร
+  searchRecipes: (query: string): Recipe[] => {
+    const lowerQuery = query.toLowerCase();
+    return recipesData.filter(recipe =>
+      recipe.title.toLowerCase().includes(lowerQuery) ||
+      recipe.description.toLowerCase().includes(lowerQuery)
+    );
+  },
+
+  // Reset ข้อมูลทั้งหมด (สำหรับ testing)
+  resetRecipes: (): void => {
+    recipesData = [];
+    console.log('All recipes cleared');
+  },
+
+  // นับจำนวนสูตรอาหาร
+  getRecipeCount: (): number => {
+    return recipesData.length;
+  }
 };
