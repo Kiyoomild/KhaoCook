@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext.tsx'
 import Header from './components/layout/Header/Header.tsx'
 import LogInPage from './pages/LogInPage/Login.tsx';
+import SignUpPage from './pages/SignUpPage/Signup.tsx';
 import HomePage from './pages/HomePage/HomePage.tsx';
 import ProfilePage from './pages/ProfilePage/ProfilePage.tsx'
 import MenuDetailPage from './pages/MenuDetailPage/MenuDetailPage.tsx';
@@ -24,7 +25,7 @@ const AppContent: React.FC = () => {
                 <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/login" element={<LogInPage />} />
-                    <Route path="/signup" element={<div>Sign Up Page</div>} />
+                    <Route path="/signup" element={<SignUpPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/my-menus" element={<div>My Menus Page</div>} />
                     <Route path="/settings" element={<div>Settings Page</div>} />

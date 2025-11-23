@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react'; //ReactNpde เป็น type ไม่ใช่ value
-
-// import authService from '../services/authService'; // สมมติว่ามีบริการ API สำหรับการยืนยันตัวตน
+import type { ReactNode } from 'react';
+import { userService } from '../services/userService'; // เพิ่มบรรทัดนี้
 
 interface User {
     id: string;
@@ -21,7 +20,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-//เก็บข้อมูล auth ใน memory แทน localStorage
+// เก็บข้อมูล auth ใน memory แทน localStorage
 let currentAuthUser: User | null = null;
 let authToken: string | null = null;
 
@@ -37,10 +36,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     }, []);
 
-    //ในฟังก์ชัน login และ signup มีพารามิเตอร์ password แต่ยังไม่ได้ใช้งานจริง (เพราะตอนนี้ใช้ mock data อยู่)
     const login = async (email: string, _password: string): Promise<User | null> => {
         try {
-             // TODO: เรียก API จริงตรงนี้
+            // TODO: เรียก API จริงตรงนี้
             // const response = await authService.login(email, password);
             
             // Mock data สำหรับทดสอบ
@@ -48,19 +46,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 id: '1',
                 username: 'Kiyoomild',
                 email,
-                avatarURL: 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg' // หรือใช้รูปจริง
-        };
+                avatarURL: 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg'
+            };
 
-            //บันทุกใน Memory
+            // บันทึกใน Memory
             currentAuthUser = mockUser;
-            authToken = 'mock-token=12345';
+            authToken = 'mock-token-12345';
             
             setUser(mockUser);
             setIsAuthenticated(true);
 
             return mockUser;
-        }  catch (error) {
-            console.error('Login failed: ', error);
+        } catch (error) {
+            console.error('Login failed:', error);
             return null;
         }
     };
@@ -70,33 +68,53 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // TODO: เรียก API จริงตรงนี้
             // const response = await authService.signup(username, email, password);
             
+            // ดึง avatar จาก userService หรือใช้ default
+            const avatar = userService.getUserAvatar(username);
+            
             // Mock data สำหรับทดสอบ
             const mockUser: User = {
-                id: '2',
+                id: Date.now().toString(), // สร้าง id ไม่ซ้ำ
                 username,
                 email,
-                avatar: 'https://via.placeholder.com/150'
-        };
+                avatar: avatar,
+                avatarURL: avatar // ใช้ค่าเดียวกัน
+            };
 
+            // บันทึกใน Memory
             currentAuthUser = mockUser;
-            authToken = 'mock-token-67890';
+            authToken = `mock-token-${Date.now()}`;
+            
             setUser(mockUser);
             setIsAuthenticated(true);
 
+            // เพิ่ม user เข้า userService
+            const existingUser = userService.getUserByUsername(username);
+            if (!existingUser) {
+                userService.addUser({
+                    username: username,
+                    avatar: avatar,
+                    email: email
+                });
+            }
+
             return mockUser;
         } catch (error) {
-            console.error('Signup failed: ', error);
+            console.error('Signup failed:', error);
             return null;
         }
     };
 
     const logout = (): void => {
-        //ลบข้อมูลใน memory
+        // ลบข้อมูลใน memory
         currentAuthUser = null;
         authToken = null;
 
         setUser(null);
         setIsAuthenticated(false);
+        
+        // ลบข้อมูลใน localStorage
+        localStorage.removeItem('username');
+        localStorage.removeItem('userAvatar');
     };
 
     return (
@@ -115,6 +133,6 @@ export const useAuth = (): AuthContextType => {
     return context;
 };
 
-// 🆕 Helper function สำหรับเข้าถึง current user (สำหรับ service อื่นๆ)
+// Helper function สำหรับเข้าถึง current user (สำหรับ service อื่นๆ)
 export const getCurrentUser = (): User | null => currentAuthUser;
 export const getAuthToken = (): string | null => authToken;
