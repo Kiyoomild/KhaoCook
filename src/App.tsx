@@ -8,12 +8,12 @@ import HomePage from './pages/HomePage/HomePage.tsx';
 import ProfilePage from './pages/ProfilePage/ProfilePage.tsx'
 import MenuDetailPage from './pages/MenuDetailPage/MenuDetailPage.tsx';
 import AddRecipe from './pages/AddRecipe/AddRecipe.tsx';
-import { getFoods } from "./services/food";
+
 
 const AppContent: React.FC = () => {
     const location = useLocation();
 
-    // ✅ กำหนด path ที่ไม่อยากให้ Header แสดง
+    // กำหนด path ที่ไม่อยากให้ Header แสดง
     const hideHeaderRoutes = ['/login', '/signup'];
 
     const shouldShowHeader = !hideHeaderRoutes.includes(location.pathname);

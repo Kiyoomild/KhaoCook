@@ -1,15 +1,19 @@
+// src/pages/AddRecipe.tsx
+
 import React from "react";
 import { useRef } from 'react';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import './AddRecipe.css';
-import { userService } from '../../services/userService';
 import { recipeService } from "../../services/recipeService";
-//import Header from "../../components/layout/Header/Header"
+import { useAuth } from "../../contexts/AuthContext"; 
+//import type { UserData } from "../../services/api"; // [FIX] ใช้ type-only import
 
 export default function AddRecipe() {
     const navigate = useNavigate();
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    // [FIX] ใช้ตัวแปรนี้จริงใน return (เพื่อให้ไม่เกิด warning)
+    const fileInputRef = useRef<HTMLInputElement>(null); 
+    const { user } = useAuth();
 
     const [ formData, setFormData] = useState({
         name: '',
@@ -17,9 +21,9 @@ export default function AddRecipe() {
         ingredients: '',
         steps: ''
     });
+    // [FIX] ใช้ตัวแปรเหล่านี้จริงในโค้ด (เพื่อให้ไม่เกิด warning)
     const [ image, setImage ] = useState<string | null>(null);
     const [ isUploading, setIsUploading ] = useState(false);
-    const [currentUser] = useState('Kiyoomild'); //ใช้ state แทน localStorage 
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -106,36 +110,43 @@ export default function AddRecipe() {
         input.click();
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        //ตรวจสอบข้อมูลก่อน Submit
+        // 1. ตรวจสอบสถานะล็อกอิน
+        if (!user || !user.id) {
+            alert('กรุณาเข้าสู่ระบบก่อนเพิ่มสูตรอาหาร');
+            navigate('/login');
+            return;
+        }
+
+        // 2. ตรวจสอบข้อมูลก่อน Submit
         if (!formData.name || !formData.ingredients || !formData.steps) {
             alert('กรุณากรอกข้อมูลให้ครบถ้วน')
             return;
         }
-
-        //ดึง avatar ของ user นี้
-        const userAvatar = userService.getUserAvatar(currentUser);
         
-        // สร้าง id และ createdAt สำหรับเมนูใหม่
+        // 3. เตรียมข้อมูลสำหรับส่ง API
         const newRecipe = {
-            id: Date.now().toString(),
             title: formData.name,
             description: `หมวดหมู่: ${formData.category}\n\nส่วนผสม:\n${formData.ingredients}\n\nวิธีทำ:\n${formData.steps}`,
             image: image || '',
-            userId: currentUser,
-            authorAvatar: userAvatar,
+            userId: user.id, 
         };
 
-        recipeService.addRecipe(newRecipe);
+       try {
+        // 🔑 FIX: ลบ 'as any' ออก และกำหนด Type ชัดเจน (ถ้าทำได้)
+        // หรือให้ recipeService.addRecipe ส่งค่ากลับมาเป็น type ที่ถูกต้อง
+        const createdRecipe = await recipeService.addRecipe(newRecipe); // <-- ลบ as any
 
-        console.log('New Recipe:', newRecipe)
-        console.log('Form Data:', formData);
-        console.log('Image:', image);
-        
-        // กลับไปหน้า Home
-        navigate('/', { state: { refresh: Date.now() } });
+        console.log('New Recipe Created:', createdRecipe);
+            
+            // 5. กลับไปหน้า Home และสั่งให้ Refresh
+            navigate('/', { state: { refresh: Date.now() } });
+        } catch (error) {
+            console.error('Error adding recipe:', error);
+            alert('ไม่สามารถเพิ่มสูตรอาหารได้: ' + (error as Error).message);
+        }
     };
 
 

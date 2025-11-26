@@ -1,85 +1,90 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react'; //ReactNpde เป็น type ไม่ใช่ value
+import React, { createContext, useContext, useState } from 'react'; // **[แก้ไข]** ลบ useEffect ออก
+import type { ReactNode } from 'react';
 
-// import authService from '../services/authService'; // สมมติว่ามีบริการ API สำหรับการยืนยันตัวตน
+// **1. การนำเข้า Type และฟังก์ชัน API**
+import { loginUser } from '../services/api'; 
+import type { UserData } from '../services/api'; 
 
-interface User {
-    id: string;
-    username: string;
-    email: string;
-    avatar?: string;
-    avatarURL?: string;
-}
-
+// 2. กำหนด Type ของ Context
 interface AuthContextType {
-    user: User | null;
+    user: UserData | null; 
     isAuthenticated: boolean;
-    login: (email: string, password: string) => Promise<User | null>;
-    signup: (username: string, email: string, password: string) => Promise<User | null>;
+    login: (email: string, password: string) => Promise<UserData>;
+    signup: (username: string, email: string, password: string) => Promise<UserData | null>;
     logout: () => void;
 }
 
+// กำหนด Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-//เก็บข้อมูล auth ใน memory แทน localStorage
-let currentAuthUser: User | null = null;
-let authToken: string | null = null;
+// =======================================================
+// 🔑 PERSISTENCE FIX: ฟังก์ชันสำหรับดึงข้อมูลผู้ใช้เริ่มต้นจาก Local Storage
+// =======================================================
+
+const getInitialUser = (): UserData | null => {
+    const username = localStorage.getItem('username');
+    const avatar = localStorage.getItem('userAvatar');
+    // **[แก้ไข]** ลบการดึง 'token' ที่ไม่ได้ใช้งานออกก่อน
+    // const token = localStorage.getItem('auth_token'); 
+
+    if (username && avatar) {
+        // สร้าง UserData object ชั่วคราวเพื่อใช้เป็นค่าเริ่มต้นของ State
+        return { 
+            username, 
+            avatar_url: avatar, 
+            id: 0, 
+            email: 'N/A', 
+            created_at: new Date().toISOString() 
+        } as UserData;
+    }
+    return null; 
+};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(currentAuthUser);
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!currentAuthUser);
+    const initialUser = getInitialUser();
+    const [user, setUser] = useState<UserData | null>(initialUser); 
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!initialUser);
 
-    // โหลดข้อมูล user จาก memory เมื่อ component ถูก mount
-    useEffect(() => {
-        if (currentAuthUser) {
-            setUser(currentAuthUser);
-            setIsAuthenticated(true);
-        }
-    }, []);
-
-    //ในฟังก์ชัน login และ signup มีพารามิเตอร์ password แต่ยังไม่ได้ใช้งานจริง (เพราะตอนนี้ใช้ mock data อยู่)
-    const login = async (email: string, _password: string): Promise<User | null> => {
+    // 3. ฟังก์ชัน Login (เชื่อมต่อ API Backend จริง)
+    const login = async (email: string, password: string): Promise<UserData> => {
         try {
-             // TODO: เรียก API จริงตรงนี้
-            // const response = await authService.login(email, password);
+            const userDataFromApi = await loginUser(email, password); 
             
-            // Mock data สำหรับทดสอบ
-            const mockUser: User = {
-                id: '1',
-                username: 'Kiyoomild',
-                email,
-                avatarURL: 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg' // หรือใช้รูปจริง
-        };
+            // 🔑 FIX: บันทึกข้อมูลที่สำคัญลง LocalStorage
+            localStorage.setItem('username', userDataFromApi.username);
+            localStorage.setItem('userAvatar', userDataFromApi.avatar_url);
+            // ถ้า Backend ส่ง Token มา (เช่น JWT), ให้บันทึกที่นี่ด้วย
+            // localStorage.setItem('auth_token', userDataFromApi.token); 
 
-            //บันทุกใน Memory
-            currentAuthUser = mockUser;
-            authToken = 'mock-token=12345';
-            
-            setUser(mockUser);
+            setUser(userDataFromApi);
             setIsAuthenticated(true);
 
-            return mockUser;
+            return userDataFromApi;
         }  catch (error) {
             console.error('Login failed: ', error);
-            return null;
+            throw error; 
         }
     };
 
-    const signup = async (username: string, email: string, _password: string): Promise<User | null> => {
+    // 4. ฟังก์ชัน Signup (Mock Data ชั่วคราว)
+    const signup = async (username: string, email: string, password: string): Promise<UserData | null> => {
         try {
-            // TODO: เรียก API จริงตรงนี้
-            // const response = await authService.signup(username, email, password);
-            
-            // Mock data สำหรับทดสอบ
-            const mockUser: User = {
-                id: '2',
+            const tempMockToken = `mock-token-${username}-${password.length}`; 
+            // TODO: เรียก API Signup จริงตรงนี้ (POST /api/users) 
+
+            const mockUser: UserData = {
+                id: 999, 
                 username,
                 email,
-                avatar: 'https://via.placeholder.com/150'
-        };
+                avatar_url: 'https://via.placeholder.com/150',
+                created_at: new Date().toISOString(),
+            };
+            
+            // 🔑 FIX: บันทึก MockUser และ MockToken ลง LocalStorage เมื่อ Signup
+            localStorage.setItem('username', mockUser.username);
+            localStorage.setItem('userAvatar', mockUser.avatar_url);
+            localStorage.setItem('auth_token', tempMockToken); // **[แก้ไข]** นำ tempMockToken ไปใช้
 
-            currentAuthUser = mockUser;
-            authToken = 'mock-token-67890';
             setUser(mockUser);
             setIsAuthenticated(true);
 
@@ -90,10 +95,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    // 5. ฟังก์ชัน Logout 
     const logout = (): void => {
-        //ลบข้อมูลใน memory
-        currentAuthUser = null;
-        authToken = null;
+        // 🔑 FIX: ล้างข้อมูลจาก LocalStorage
+        localStorage.removeItem('username');
+        localStorage.removeItem('userAvatar');
+        localStorage.removeItem('auth_token'); // ลบ token ด้วย
 
         setUser(null);
         setIsAuthenticated(false);
@@ -106,7 +113,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
 };
 
-// Custom hook สำหรับใช้ Auth Context
+// 6. Custom hook และ Helper functions
 export const useAuth = (): AuthContextType => {
     const context = useContext(AuthContext);
     if (!context) {
@@ -115,6 +122,12 @@ export const useAuth = (): AuthContextType => {
     return context;
 };
 
-// 🆕 Helper function สำหรับเข้าถึง current user (สำหรับ service อื่นๆ)
-export const getCurrentUser = (): User | null => currentAuthUser;
-export const getAuthToken = (): string | null => authToken;
+// Helper function สำหรับเข้าถึง current user (สำหรับ service อื่นๆ)
+export function getCurrentUser(): UserData | null {
+    return getInitialUser(); 
+}
+
+// Helper function สำหรับเข้าถึง Auth Token
+export function getAuthToken(): string | null {
+    return localStorage.getItem('auth_token'); // ดึงจาก localStorage
+}

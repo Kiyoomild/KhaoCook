@@ -1,91 +1,43 @@
-// src/services/recipeService.ts
+import { API_URL } from './api'; 
+
 export type Recipe = {
-  id: string;
+  id: number; 
   title: string;
   description: string;
-  image: string;
-  userId: string;
-  authorAvatar?: string;
-  createdAt?: string;
+  image: string; // ใช้ 'image' ตามตาราง recipeservice
+  userId: number; 
+  username: string; 
+  avatar_url: string; 
+  created_at: string;
 };
 
-let recipesData: Recipe[] = [];
 
 export const recipeService = {
-  //ดึงข้อมูลสูตรอาหารทั้งหมด
-  getAllRecipes: (): Recipe[] => {
-    return [...recipesData]; // return copy
+
+  getAllRecipes: async (): Promise<Recipe[]> => { 
+      const response = await fetch(`${API_URL}/recipes`, {
+          headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+          throw new Error('Failed to fetch recipes from API');
+      }
+      return await response.json(); 
+  },
+  
+  addRecipe: async (recipe: Partial<Recipe>): Promise<Recipe> => { 
+      const response = await fetch(`${API_URL}/recipes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(recipe),
+      });
+
+      if (!response.ok) {
+  
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to add recipe to API'); 
+      }
+      return await response.json(); 
   },
 
-  //ดึงข้อมูลสูตรอาหารของ User คนนั้น
-  getUserRecipes: (userId: string): Recipe[] => {
-    return recipesData.filter(recipe => recipe.userId === userId);
-  },
-
-  //ดึงสูตรอาหารเดียว
-  getRecipeById: (id: string): Recipe | undefined => {
-    return recipesData.find(recipe => recipe.id === id);
-  },
-
-  //เพิ่มสูตรอาหารใหม่
-  addRecipe: (recipe: Recipe): Recipe => {
-    const newRecipe: Recipe = {
-      ...recipe,
-      createdAt: new Date().toISOString()
-    };
-    recipesData.push(newRecipe);
-    console.log('Recipe added:', newRecipe);
-    console.log('Total recipes:', recipesData.length);
-    return newRecipe;
-  },
-
-  //Update เมนู
-  updateRecipe: (id: string, updates: Partial<Recipe>): boolean => {
-    const index = recipesData.findIndex(recipe => recipe.id === id);
-
-    if (index === -1) {
-      console.log('Recipe not found:', id);
-      return false;
-    }
-
-    recipesData[index] = {
-      ...recipesData[index],
-      ...updates
-    };
-    console.log('Recipe updated:', recipesData[index]);
-    return true;
-  },
-
-  //ลบเมนู
-  deleteRecipe: (id: string): boolean => {
-    const initialLength = recipesData.length;
-    recipesData = recipesData.filter(recipe => recipe.id !== id);
-
-    const deleted = recipesData.length !== initialLength;
-    if (deleted) {
-      console.log('Recipe deleted:', id);
-      console.log('Remaining recipes:', recipesData.length);
-    }
-    return deleted;
-  },
-
-  //ค้นหสูตรอาหาร
-  searchRecipes: (query: string): Recipe[] => {
-    const lowerQuery = query.toLowerCase();
-    return recipesData.filter(recipe =>
-      recipe.title.toLowerCase().includes(lowerQuery) ||
-      recipe.description.toLowerCase().includes(lowerQuery)
-    );
-  },
-
-  // Reset ข้อมูลทั้งหมด (สำหรับ testing)
-  resetRecipes: (): void => {
-    recipesData = [];
-    console.log('All recipes cleared');
-  },
-
-  // นับจำนวนสูตรอาหาร
-  getRecipeCount: (): number => {
-    return recipesData.length;
-  }
 };

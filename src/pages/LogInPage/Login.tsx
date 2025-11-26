@@ -1,11 +1,11 @@
-import { useState} from 'react'
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext'
-import { userService } from '../../services/userService'
-import KhaoCook5 from '../../assets/images/KhaoCook5.png'
-import './Login.css'
+import { useAuth } from '../../contexts/AuthContext';
+import KhaoCook5 from '../../assets/images/KhaoCook5.png';
+import './Login.css';
 
 const LoginPage: React.FC = () => {
+    // **Error แก้ไข: useState ถูกนำเข้าจาก 'react' แล้ว**
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [error, setError] = useState<string>('');
@@ -16,37 +16,29 @@ const LoginPage: React.FC = () => {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
-        setLoading(true);
+        setError(''); // **Error แก้ไข: ใช้ setError ที่ประกาศไว้**
+        setLoading(true); // **Error แก้ไข: ใช้ setLoading ที่ประกาศไว้**
 
         try {
-            const user = await login(email, password);
-            const username = user?.username ?? email;
+            // Context จะเรียก API Login จริง
+            const user = await login(email, password); 
 
-            // ดึง avatar จาก userService
-            let avatar = user?.avatarURL;
-            if (!avatar) {
-                avatar = userService.getUserAvatar(username);
-            }
+            const username = user.username; 
+            const avatar = user.avatar_url; 
 
+            // 2. บันทึกข้อมูลที่ได้จาก Backend ลง localStorage โดยตรง
             localStorage.setItem('username', username);
             localStorage.setItem('userAvatar', avatar);
 
-            const existingUser = userService.getUserByUsername(username);
-            if (!existingUser) {
-                userService.addUser({
-                    username: username,
-                    avatar: avatar,
-                    email: email
-                });
-            }
 
             console.log('Login successful:', { username, avatar });
             navigate('/');
+
         } catch (err) {
-            setError('เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่านอีกครั้ง');
-        } finally {
-            setLoading(false);
+    console.error('Login failed:', err); // <-- เรียกใช้ตัวแปร err
+    setError('เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่านอีกครั้ง');
+} finally {
+            setLoading(false); // **Error แก้ไข: ใช้ setLoading ที่ประกาศไว้**
         }
     };
 
@@ -108,4 +100,3 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
-
