@@ -7,16 +7,25 @@ import { recipeService } from '../../services/recipeService';
 import type { Recipe } from '../../services/recipeService';
 import './MenuDetailPage.css';
 
+// [1] เพิ่ม Interface สำหรับรับค่าดิบจาก Database (เพื่อแก้ Error "Unexpected any")
+interface ApiCommentData {
+    id: number;
+    comment_text: string;
+    created_at: string;
+    username: string;
+    avatar_url: string | null;
+}
+
+// Interface สำหรับใช้ในหน้าเว็บ (Frontend)
 interface Comment {
     id: string;
-    userId: string;
+    userId?: string;
     username: string;
     userAvatar: string;
     text: string;
     createdAt: Date;
 }
 
-// Extends Recipe เพื่อให้ Type เข้ากันได้
 interface MenuDetail extends Recipe {
     caption: string;
     ingredients: string[];
@@ -37,7 +46,31 @@ const MenuDetailPage: React.FC = () => {
     const [ newComment, setNewComment ] = useState<string>('');
     const [ comments, setComments ] = useState<Comment[]>([]);
 
-    // โหลดข้อมูลจาก API
+    // -------------------------------------------------------------------------
+    // ฟังก์ชันสำหรับดึงข้อมูล Comment จาก Server
+    // -------------------------------------------------------------------------
+    const fetchComments = async (recipeId: string) => {
+        try {
+            // ยิงไปที่ API Backend ของเรา
+            const response = await fetch(`http://localhost:3000/api/recipes/${recipeId}/comments`);
+            const data = await response.json();
+            
+            // [2] แก้ไข: ระบุ Type เป็น ApiCommentData แทน any
+            const mappedComments: Comment[] = data.map((c: ApiCommentData) => ({
+                id: String(c.id),
+                text: c.comment_text,
+                username: c.username || 'Unknown',
+                userAvatar: c.avatar_url || 'https://placehold.co/100',
+                createdAt: new Date(c.created_at)
+            }));
+
+            setComments(mappedComments);
+        } catch (error) {
+            console.error('Failed to load comments:', error);
+        }
+    };
+
+    // โหลดข้อมูลเมนู + คอมเม้นท์
     const loadMenuDetail = useCallback(async () => {
         if (!id) return;
         setLoading(true);
@@ -45,7 +78,9 @@ const MenuDetailPage: React.FC = () => {
             // 1. เรียก API ดึงข้อมูล Recipe
             const recipeData = await recipeService.getRecipeById(id);
             
-            // 2. แปลงข้อมูล Description (String) ให้เป็น Array (แบบง่าย)
+            // 2. เรียกฟังก์ชันดึงคอมเม้นท์
+            await fetchComments(id);
+
             const descLines = recipeData.description ? recipeData.description.split('\n') : [];
             
             const mappedMenu: MenuDetail = {
@@ -53,14 +88,12 @@ const MenuDetailPage: React.FC = () => {
                 caption: recipeData.description || '',
                 ingredients: descLines.length > 0 ? descLines : ['ดูในวิธีทำ'],
                 steps: descLines.length > 0 ? descLines : ['ดูคำอธิบาย'],
-                
                 likes: 0, 
                 isLiked: false,
                 comments: [] 
             };
 
             setMenu(mappedMenu);
-            setComments([]); 
         } catch (error) {
             console.error('Failed to load menu detail:', error);
         } finally {
@@ -80,7 +113,10 @@ const MenuDetailPage: React.FC = () => {
         setIsFavorite(!isFavorite);
     };
 
-    const handleAddComment = (e: React.FormEvent) => {
+    // -------------------------------------------------------------------------
+    // ฟังก์ชันส่ง Comment ไปบันทึกที่ Server
+    // -------------------------------------------------------------------------
+    const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!isAuthenticated || !user) {
@@ -92,17 +128,40 @@ const MenuDetailPage: React.FC = () => {
             return;
         }
 
-        const comment: Comment = {
-            id: Date.now().toString(),
-            userId: String(user.id), 
-            username: user.username,
-            userAvatar: user.avatar_url || 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg',
-            text: newComment,
-            createdAt: new Date()
-        };
+        try {
+            const response = await fetch('http://localhost:3000/api/comments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    recipe_id: id,
+                    comment_text: newComment
+                })
+            });
 
-        setComments([ comment, ...comments]);
-        setNewComment('');
+            if (!response.ok) {
+                throw new Error('Failed to post comment');
+            }
+
+            const savedComment = await response.json();
+
+            const commentObj: Comment = {
+                id: String(savedComment.id),
+                userId: String(user.id),
+                username: savedComment.username || user.username,
+                userAvatar: savedComment.avatar_url || user.avatar_url || 'https://placehold.co/100',
+                text: savedComment.comment_text,
+                createdAt: new Date(savedComment.created_at)
+            };
+
+            setComments([ commentObj, ...comments]);
+            setNewComment('');
+
+        } catch (error) {
+            console.error('Error posting comment:', error);
+            alert('เกิดข้อผิดพลาดในการส่งความคิดเห็น');
+        }
     };
 
     if (loading) {
@@ -129,7 +188,6 @@ const MenuDetailPage: React.FC = () => {
             <button className="back-button" onClick={() => navigate(-1)}>← Back</button>
 
             <div className="menu-image-section">
-                {/* 🔑 [FIX] ใช้ menu.image ตรงๆ ไม่ต้องใช้ as any */}
                 <img 
                     src={menu.image} 
                     alt={menu.title}
@@ -161,7 +219,6 @@ const MenuDetailPage: React.FC = () => {
                 className={`favorite-button ${isFavorite ? 'active' : ''}`}
                 onClick={handleFavorite}
             >
-                {/* SVG Icon */}
                 <span>{isFavorite ? 'ลบออกจากรายการโปรด' : 'เพิ่มในรายการโปรด'}</span>
             </button>
 
@@ -188,7 +245,7 @@ const MenuDetailPage: React.FC = () => {
                                 <div className="comment-content">
                                     <div className="comment-header">
                                         <span className="comment-username">{comment.username}</span>
-                                        <span className="comment-date">{new Date(comment.createdAt).toLocaleDateString('th-TH')}</span>
+                                        <span className="comment-date">{new Date(comment.createdAt).toLocaleDateString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
                                     <p className="comment-text">{comment.text}</p>
                                 </div>

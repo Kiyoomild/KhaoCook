@@ -14,7 +14,7 @@ const pool = new Pool({
 app.use(cors());
 
 // =========================================================================
-// [แก้ไข] เพิ่ม Limit ขนาดไฟล์ตรงนี้ครับ (จากเดิม express.json() เฉยๆ)
+// [แก้ไข] เพิ่ม Limit ขนาดไฟล์ 50MB (แก้ปัญหา Payload Too Large)
 // =========================================================================
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -24,10 +24,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Mock Verify Token Middleware (สำหรับ Development)
 // =========================================================================
 const verifyToken = (req, res, next) => {
-    // ในระบบจริงต้องตรวจสอบ JWT Token
-    // เพื่อการทดสอบ เราจะจำลองว่าผู้ใช้ ID 1 ล็อกอินอยู่ หรือดึงจาก Header
-    // ถ้าคุณส่ง Authorization Header มา เราจะพยายาม Mock ให้สมจริงขึ้นเล็กน้อย
-    // แต่เพื่อให้ง่ายที่สุดตอนนี้ เราจะใช้ User ID ที่ส่งมา หรือ Default เป็น 1
+    // จำลองว่าผู้ใช้ ID 1 (Admin/Tester) ล็อกอินอยู่เสมอ
     req.user = { id: 1 }; 
     next();
 };
@@ -202,7 +199,6 @@ app.get('/api/users/:userId/recipes', async (req, res) => {
 // Create new recipe (POST)
 app.post('/api/recipes', async (req, res) => {
   try {
-    // รับค่า userId, image, category ให้ครบ
     const { title, description, image, category, userId } = req.body;
     
     const result = await pool.query(
@@ -220,17 +216,16 @@ app.post('/api/recipes', async (req, res) => {
 // Delete recipe (DELETE)
 app.delete('/api/recipes/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
-    const userId = req.user.id; // จาก middleware
+    // const userId = req.user.id; // ตัดส่วนเช็คความเป็นเจ้าของออกชั่วคราว เพื่อให้ Admin ลบได้ทุกอย่าง
 
     try {
-        // ตรวจสอบสิทธิ์: ลบได้เฉพาะของตัวเอง
         const result = await pool.query(
-            'DELETE FROM recipeservice WHERE id = $1 AND user_id = $2 RETURNING *',
-            [id, userId]
+            'DELETE FROM recipeservice WHERE id = $1 RETURNING *',
+            [id]
         );
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ message: 'Recipe not found or unauthorized' });
+            return res.status(404).json({ message: 'Recipe not found' });
         }
 
         res.status(200).json({ message: 'Recipe deleted successfully' });
@@ -238,6 +233,60 @@ app.delete('/api/recipes/:id', verifyToken, async (req, res) => {
         console.error('Error deleting recipe:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
+});
+
+// ==================== COMMENTS API (เพิ่มใหม่) ====================
+
+// 1. ดึงคอมเม้นท์ของเมนูนั้นๆ (GET)
+app.get('/api/recipes/:recipeId/comments', async (req, res) => {
+  try {
+    const { recipeId } = req.params;
+    // Join ตาราง users เพื่อเอารูปและชื่อคนเม้นมาโชว์
+    const result = await pool.query(`
+      SELECT c.id, c.comment_text, c.created_at, u.username, u.avatar_url 
+      FROM recipecomments c
+      LEFT JOIN users u ON c.user_id = u.id
+      WHERE c.recipe_id = $1
+      ORDER BY c.created_at DESC
+    `, [recipeId]);
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 2. โพสต์คอมเม้นท์ใหม่ (POST)
+app.post('/api/comments', verifyToken, async (req, res) => {
+  try {
+    const { recipe_id, comment_text } = req.body;
+    
+    // ใช้ ID 1 (admin) ตามที่ Mock ไว้ หรือถ้าส่ง userId มาจากหน้าบ้านก็ใช้ตัวนั้น
+    // เพื่อความชัวร์ ใช้ req.user.id จาก middleware
+    const user_id = req.user.id; 
+
+    // บันทึกลงตาราง recipecomments
+    const result = await pool.query(
+      'INSERT INTO recipecomments (recipe_id, user_id, comment_text) VALUES ($1, $2, $3) RETURNING *',
+      [recipe_id, user_id, comment_text]
+    );
+    
+    // ดึงข้อมูลผู้ใช้มาแปะคืนกลับไปให้หน้าเว็บทันที (เพื่อให้ UI อัปเดตสวยๆ)
+    const newComment = result.rows[0];
+    const userResult = await pool.query('SELECT username, avatar_url FROM users WHERE id = $1', [user_id]);
+    const user = userResult.rows[0];
+
+    res.status(201).json({
+      ...newComment,
+      username: user ? user.username : 'Unknown',
+      avatar_url: user ? user.avatar_url : null
+    });
+
+  } catch (error) {
+    console.error('Error posting comment:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.listen(PORT, () => {
