@@ -1,3 +1,4 @@
+// src/services/api.ts
 
 export interface UserData {
     id: number;
@@ -8,8 +9,8 @@ export interface UserData {
     updated_at?: string;
 }
 
-// กำหนด Base URL ของ Backend
-export const API_URL = "http://localhost:3000/api"; 
+// 🔑 [FIX] ใช้ localhost เพื่อให้ Browser มองเห็น Backend
+export const API_URL = 'http://localhost:3000/api';
 
 /**
  * ฟังก์ชันสำหรับเรียก API Login จริง

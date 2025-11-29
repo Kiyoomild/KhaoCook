@@ -12,15 +12,27 @@ const pool = new Pool({
 });
 
 app.use(cors());
-app.use(express.json());
 
-// Mock Verify Token Middleware
+// =========================================================================
+// [แก้ไข] เพิ่ม Limit ขนาดไฟล์ตรงนี้ครับ (จากเดิม express.json() เฉยๆ)
+// =========================================================================
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+
+// =========================================================================
+// Mock Verify Token Middleware (สำหรับ Development)
+// =========================================================================
 const verifyToken = (req, res, next) => {
+    // ในระบบจริงต้องตรวจสอบ JWT Token
+    // เพื่อการทดสอบ เราจะจำลองว่าผู้ใช้ ID 1 ล็อกอินอยู่ หรือดึงจาก Header
+    // ถ้าคุณส่ง Authorization Header มา เราจะพยายาม Mock ให้สมจริงขึ้นเล็กน้อย
+    // แต่เพื่อให้ง่ายที่สุดตอนนี้ เราจะใช้ User ID ที่ส่งมา หรือ Default เป็น 1
     req.user = { id: 1 }; 
     next();
 };
 
-// Health Check
+// Test DB Connection
 app.get('/api/health', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
@@ -187,10 +199,11 @@ app.get('/api/users/:userId/recipes', async (req, res) => {
   }
 });
 
-// 🔑 [FIXED] Create new recipe (POST)
+// Create new recipe (POST)
 app.post('/api/recipes', async (req, res) => {
   try {
-    const { title, description, image, category, userId } = req.body; 
+    // รับค่า userId, image, category ให้ครบ
+    const { title, description, image, category, userId } = req.body;
     
     const result = await pool.query(
       'INSERT INTO recipeservice (title, description, image, category, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
@@ -200,16 +213,17 @@ app.post('/api/recipes', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Recipe creation error:', error);
-    res.status(500).json({ error: error.message, debug_code: error.code });
+    res.status(500).json({ error: error.message });
   }
 });
 
 // Delete recipe (DELETE)
 app.delete('/api/recipes/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
-    const userId = req.user.id; 
+    const userId = req.user.id; // จาก middleware
 
     try {
+        // ตรวจสอบสิทธิ์: ลบได้เฉพาะของตัวเอง
         const result = await pool.query(
             'DELETE FROM recipeservice WHERE id = $1 AND user_id = $2 RETURNING *',
             [id, userId]
