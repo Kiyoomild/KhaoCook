@@ -7,7 +7,7 @@ interface MenuCardProps {
     image: string;
     title: string;
     author: string;
-    authorAvatar?: string;
+    authorAvatar?: string | null;   // ← แก้ตรงนี้!
     description?: string;
     currentUser?: string;
     onDelete?: (recipeId: string, author: string) => void;
@@ -41,14 +41,14 @@ const MenuCard: React.FC<MenuCardProps> = ({
                 <img src={image} alt={title} className="menu-card-image" />
             </div>
             {currentUser && author === currentUser && onDelete && (
-                    <button
-                        className="delete-btn"
-                        onClick={handleDelete}
-                        title="ลบเมนูนี้"
-                    >
-                        🗑️
-                    </button>
-                )}
+                <button
+                    className="delete-btn"
+                    onClick={handleDelete}
+                    title="ลบเมนูนี้"
+                >
+                    🗑️
+                </button>
+            )}
             <div className="menu-card-content">
                 <h3 className="menu-card-title">{title}</h3>
                 <div className="menu-card-author">
@@ -61,8 +61,6 @@ const MenuCard: React.FC<MenuCardProps> = ({
                     )}
                     <span className="author-name">{author}</span>
                 </div>
-
-                
             </div>
         </div>
     );

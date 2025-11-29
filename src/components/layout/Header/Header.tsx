@@ -1,22 +1,21 @@
-import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../../contexts/AuthContext'
-import { userService } from '../../../services/userService'
-import KhaoCook5 from '../../../assets/images/KhaoCook5.png'
-import './Header.css'
+// src/components/layout/Header/Header.tsx
+
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/useAuth'; // ดึงจากไฟล์ใหม่
+import KhaoCook5 from '../../../assets/images/KhaoCook5.png';
+import './Header.css';
+
+const DEFAULT_AVATAR = 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg';
 
 const Header: React.FC = () => {
     const { user, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
-    const [userAvatar, setUserAvatar] = useState<string>('');
 
-    useEffect(() => {
-        if (user?.username) {
-            const avatar = userService.getUserAvatar(user.username);
-            setUserAvatar(avatar);
-        }
-    }, [user]);
+    // 🔑 [FIX] ใช้ user.avatar_url โดยตรงจาก Context (ไม่ต้องใช้ userService)
+    // ถ้า user ไม่มีรูป ให้ใช้ DEFAULT_AVATAR
+    const avatarSrc = user?.avatar_url || DEFAULT_AVATAR;
 
     const handleLogout = () => {
         logout();
@@ -42,18 +41,18 @@ const Header: React.FC = () => {
         }
         return () => {
             document.removeEventListener('click', handleClickOutside);
-        }  ;
+        };
     }, [showDropdown]);
 
     return (
         <header className="navbar">
             <div className="navbar-container">
-                {/* Logo*/}
+                {/* Logo */}
                 <Link to="/" className="navbar-logo">
                     <img src={KhaoCook5} alt="KhaoCook Logo" className="navbar-logo-image" />
                 </Link>
 
-                {/* แสดงตามสถานะการล็อกอิน*/}
+                {/* แสดงตามสถานะการล็อกอิน */}
                 <div className="navbar-right">
                     {!isAuthenticated ? (
                         // ถ้ายังไม่ได้ล็อกอิน - แสดงปุ่ม Login & Sign Up
@@ -69,15 +68,15 @@ const Header: React.FC = () => {
                         // ถ้าล็อกอินแล้ว - แสดงรูปโปรไฟล์
                         <div className="navbar-profile">
                             <button className="profile-button" onClick={toggleDropdown}>
-                                    <img 
-                                        src={userAvatar || user?.avatarURL || user?.avatar || 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg'} 
-                                        alt={user?.username || 'User'} 
-                                        className="profile-header-avatar"
-                                        onError={(e) => {
-                                            //ถ้ารูปโหลดไม่ได้ ใช้รูป default
-                                            (e.target as HTMLImageElement).src = 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg'
-                                        }}
-                                    />
+                                <img 
+                                    src={avatarSrc} 
+                                    alt={user?.username || 'User'} 
+                                    className="profile-header-avatar"
+                                    onError={(e) => {
+                                        // ถ้ารูปโหลดไม่ได้ ใช้รูป default
+                                        (e.target as HTMLImageElement).src = DEFAULT_AVATAR;
+                                    }}
+                                />
                             </button>
 
                             {/* Dropdown Menu */}
@@ -86,11 +85,11 @@ const Header: React.FC = () => {
                                     <div className="dropdown-header">
                                         <div className="dropdown-avatar-wrapper">
                                             <img 
-                                                src={userAvatar || user?.avatarURL || user?.avatar || 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg'}
+                                                src={avatarSrc}
                                                 alt={user?.username || 'User'}
                                                 className="dropdown-avatar"
                                                 onError={(e) => {
-                                                    (e.target as HTMLImageElement).src = 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg';
+                                                    (e.target as HTMLImageElement).src = DEFAULT_AVATAR;
                                                 }}
                                             />
                                         </div>

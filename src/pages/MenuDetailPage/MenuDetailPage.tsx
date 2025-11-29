@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
+// src/pages/MenuDetailPage/MenuDetailPage.tsx
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/useAuth'; 
+import { recipeService } from '../../services/recipeService';
+import type { Recipe } from '../../services/recipeService';
 import './MenuDetailPage.css';
 
 interface Comment {
@@ -12,72 +16,15 @@ interface Comment {
     createdAt: Date;
 }
 
-interface MenuDetail {
-    id: string;
-    title: string;
-    image: string;
+// Extends Recipe เพื่อให้ Type เข้ากันได้
+interface MenuDetail extends Recipe {
     caption: string;
     ingredients: string[];
     steps: string[];
-    author: {
-        id: string;
-        username: string;
-        avatar: string;
-    };
     likes: number;
     isLiked: boolean;
     comments: Comment[];
 }
-
-//Mock data
-const mockMenuDetail: MenuDetail = {
-    id: '1',
-    title: 'ข้าวแกงกระหรี่ทงคัตสึไข่ข้น',
-    image: 'https://i.pinimg.com/736x/d6/a4/39/d6a43951c931a67ede0cd753322d898e.jpg',
-    caption: 'มาทำทงคัตสึแส่บๆ กินกับข้าวแกงกระหรี่ร้อนๆ ไข่ข้นละมุนลิ้นกัน ด้วยวัตถุดิบง่ายๆ ที่หาซื้อได้ในตลาดนัดใกล้บ้านกันครับ',
-    ingredients: [
-        'ข้าวสวยร้อนๆ 1 จาน',
-        'หมูสันนอกสไลซ์ 150 กรัม',
-        'เกล็ดขนมปังสำหรับชุบทอด 1 ถ้วย',
-        'ไข่ไก่ 2 ฟอง',
-        'น้ำมันพืชสำหรับทอด',
-        'ซอสแกงกระหรี่สำเร็จรูป 1 กล่อง'
-    ],
-    steps: [
-        'หุงข้าวสวยร้อนๆ เตรียมไว้',
-        'ต้มซอสแกงกระหรี่ตามคำแนะนำบนกล่อง',
-        'เตรียมหมูสันนอกสำหรับชุบทอด โดยปรุงรสด้วยเกลือและพริกไทย',
-        'นำเนื้อหมูไปชุบแป้งสาลี ตอกไข่ลงไปชุบ แล้วนำไปคลุกกับเกล็ดขนมปังให้ทั่ว',
-        'ทอหดหมูในน้ำมันร้อนจนสุกเหลืองกรอบ ตักขึ้นพักให้สะเด็ดน้ำมัน',
-        'ทำไข่ข้นโดยตอกไข่ใส่ชาม ปรุงรสด้วยเกลือเล็กน้อย แล้วตีให้เข้ากัน นำไปทอดในกระทะจนไข่สุกนุ่ม',
-        'จัดเสิร์ฟโดยวางข้าวสวยในจาน ราดด้วยซอสแกงกระหรี่ วางทงคัตสึทอดกรอบและไข่ข้นด้านบน พร้อมเสิร์ฟ'
-    ],
-    author: {
-        id: 'user1',
-        username: 'IUMUNYAIYAI',
-        avatar: 'https://i.pinimg.com/736x/0d/f2/93/0df293b1ffef115759e721217370db5c.jpg'
-    },
-    likes: 245,
-    isLiked: false,
-    comments: [
-        {
-            id: 'c1',
-            userId: 'user5',
-            username: 'มาแตลคนดี',
-            userAvatar: 'https://i.pinimg.com/736x/ba/d3/0b/bad30b01c693ac003190454526eee4a4.jpg',
-            text: 'เริ่ดๆเลยท่านนายกสมาคมคนชอบหอย',
-            createdAt: new Date('2024-06-10T10:30:00')
-        },
-        {
-            id: 'c2',
-            userId: 'user6',
-            username: 'มาร์ชเมลโล่',
-            userAvatar: 'https://i.pinimg.com/1200x/c4/78/fc/c478fc33aa2681b3202e369bb46ed814.jpg',
-            text: 'พี่เขตเปิดเซิร์ฟให้มาร์ชหน่อย',
-            createdAt: new Date('2024-06-10T08:50:00')
-        }
-    ]
-};
 
 const MenuDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -90,27 +37,40 @@ const MenuDetailPage: React.FC = () => {
     const [ newComment, setNewComment ] = useState<string>('');
     const [ comments, setComments ] = useState<Comment[]>([]);
 
-    useEffect(() => {
-        loadMenuDetail();
-    }, [ id ]);
-
-    const loadMenuDetail = async () => {
+    // โหลดข้อมูลจาก API
+    const loadMenuDetail = useCallback(async () => {
+        if (!id) return;
         setLoading(true);
         try {
-            // TODO: เรียก API จริง
-            // const data = await menuService.getMenuDetail(id);
+            // 1. เรียก API ดึงข้อมูล Recipe
+            const recipeData = await recipeService.getRecipeById(id);
             
-            // Mock data
-            await new Promise(resolve => setTimeout(resolve, 500));
-            setMenu(mockMenuDetail);
-            setIsFavorite(mockMenuDetail.isLiked);
-            setComments(mockMenuDetail.comments);
+            // 2. แปลงข้อมูล Description (String) ให้เป็น Array (แบบง่าย)
+            const descLines = recipeData.description ? recipeData.description.split('\n') : [];
+            
+            const mappedMenu: MenuDetail = {
+                ...recipeData,
+                caption: recipeData.description || '',
+                ingredients: descLines.length > 0 ? descLines : ['ดูในวิธีทำ'],
+                steps: descLines.length > 0 ? descLines : ['ดูคำอธิบาย'],
+                
+                likes: 0, 
+                isLiked: false,
+                comments: [] 
+            };
+
+            setMenu(mappedMenu);
+            setComments([]); 
         } catch (error) {
             console.error('Failed to load menu detail:', error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
+
+    useEffect(() => {
+        loadMenuDetail();
+    }, [loadMenuDetail]);
 
     const handleFavorite = () => {
         if (!isAuthenticated) {
@@ -118,7 +78,6 @@ const MenuDetailPage: React.FC = () => {
             return;
         }
         setIsFavorite(!isFavorite);
-        // TODO: เรียก API เพื่อบันทึก favorite
     };
 
     const handleAddComment = (e: React.FormEvent) => {
@@ -135,17 +94,15 @@ const MenuDetailPage: React.FC = () => {
 
         const comment: Comment = {
             id: Date.now().toString(),
-            userId: user.id,
+            userId: String(user.id), 
             username: user.username,
-            userAvatar: user.avatar || 'https://i.pravatar.cc/150?img=1',
+            userAvatar: user.avatar_url || 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg',
             text: newComment,
             createdAt: new Date()
         };
 
         setComments([ comment, ...comments]);
         setNewComment('');
-
-        // TODO: เรียก API เพื่อบันทึก comment
     };
 
     if (loading) {
@@ -169,14 +126,10 @@ const MenuDetailPage: React.FC = () => {
     return (
     <div className="menu-detail-page">
         <div className="menu-detail-container">
+            <button className="back-button" onClick={() => navigate(-1)}>← Back</button>
 
-            {/* Back Button */}
-            <button className="back-button" onClick={() => navigate(-1)}>
-                ← Back
-            </button>
-
-            {/* Menu Image */}
             <div className="menu-image-section">
+                {/* 🔑 [FIX] ใช้ menu.image ตรงๆ ไม่ต้องใช้ as any */}
                 <img 
                     src={menu.image} 
                     alt={menu.title}
@@ -184,55 +137,37 @@ const MenuDetailPage: React.FC = () => {
                 />
             </div>
 
-            {/* Menu Title & Caption */}
             <div className="menu-header">
                 <h1 className="menu-title">{menu.title}</h1>
+                <div className="menu-author-info">
+                    <span>โดย: @{menu.username}</span>
+                </div>
                 <p className="menu-caption">{menu.caption}</p>
             </div>
 
-
-            {/* Ingredients Section */}
             <section className="ingredients-section">
-                <h2 className="section-title">วัตถุดิบ</h2>
+                <h2 className="section-title">รายละเอียด / วัตถุดิบ</h2>
                 <ul className="ingredients-list">
-                    {menu.ingredients.map((ingredient, index) => (
+                    {menu.ingredients.map((item, index) => (
                         <li key={index} className="ingredient-item">
                             <span className="ingredient-bullet">•</span>
-                            <span>{ingredient}</span>
+                            <span>{item}</span>
                         </li>
                     ))}
                 </ul>
             </section>
 
-            {/* Steps Section */}
-            <section className="steps-section">
-                <h2 className="section-title">วิธีทำ</h2>
-                <ol className="steps-list">
-                    {menu.steps.map((step, index) => (
-                        <li key={index} className="step-item">
-                            <span className="step-number">{index + 1}</span>
-                            <span className="step-text">{step}</span>
-                        </li>
-                    ))}
-                </ol>
-            </section>
-
-            {/* Favorite Button */}
             <button 
                 className={`favorite-button ${isFavorite ? 'active' : ''}`}
                 onClick={handleFavorite}
             >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
+                {/* SVG Icon */}
                 <span>{isFavorite ? 'ลบออกจากรายการโปรด' : 'เพิ่มในรายการโปรด'}</span>
             </button>
 
-            {/* Comments Section */}
             <section className="comments-section">
                 <h2 className="section-title">ความคิดเห็น ({comments.length})</h2>
                 
-                {/* Add Comment Form */}
                 <form className="comment-form" onSubmit={handleAddComment}>
                     <input
                         type="text"
@@ -242,39 +177,24 @@ const MenuDetailPage: React.FC = () => {
                         onChange={(e) => setNewComment(e.target.value)}
                         disabled={!isAuthenticated}
                     />
-                    <button 
-                        type="submit" 
-                        className="comment-submit-btn"
-                        disabled={!isAuthenticated || !newComment.trim()}
-                    >
-                        ส่ง
-                    </button>
+                    <button type="submit" className="comment-submit-btn" disabled={!isAuthenticated || !newComment.trim()}>ส่ง</button>
                 </form>
 
-                {/* Comments List */}
                 <div className="comments-list">
-                    {comments.length === 0 ? (
-                        <p className="no-comments">ยังไม่มีความคิดเห็น</p>
-                    ) : (
+                    {comments.length === 0 ? <p className="no-comments">ยังไม่มีความคิดเห็น</p> : 
                         comments.map(comment => (
                             <div key={comment.id} className="comment-item">
-                                <img 
-                                    src={comment.userAvatar} 
-                                    alt={comment.username}
-                                    className="comment-avatar"
-                                />
+                                <img src={comment.userAvatar} alt={comment.username} className="comment-avatar" />
                                 <div className="comment-content">
                                     <div className="comment-header">
                                         <span className="comment-username">{comment.username}</span>
-                                        <span className="comment-date">
-                                            {new Date(comment.createdAt).toLocaleDateString('th-TH')}
-                                        </span>
+                                        <span className="comment-date">{new Date(comment.createdAt).toLocaleDateString('th-TH')}</span>
                                     </div>
                                     <p className="comment-text">{comment.text}</p>
                                 </div>
                             </div>
                         ))
-                    )}
+                    }
                 </div>
             </section>
         </div>

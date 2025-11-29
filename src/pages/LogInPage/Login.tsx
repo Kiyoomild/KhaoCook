@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/useAuth';
 import KhaoCook5 from '../../assets/images/KhaoCook5.png';
 import './Login.css';
+
 
 const LoginPage: React.FC = () => {
     // **Error แก้ไข: useState ถูกนำเข้าจาก 'react' แล้ว**

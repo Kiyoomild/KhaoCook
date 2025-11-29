@@ -2,18 +2,19 @@ import React from 'react';
 import MenuCard from './MenuCard';
 import './MenuGrid.css';
 
-interface Menu {
+// ใช้ชื่อ type ให้ตรงกับ HomePage.tsx
+export interface MenuGridItem {
     id: string;
     image: string;
     title: string;
     author: string;
-    authorAvatar?: string;
+    authorAvatar?: string | null;
     description?: string;
     isUserRecipe?: boolean;
 }
 
 interface MenuGridProps {
-    menus: Menu[];
+    menus: MenuGridItem[];  // <-- แก้จาก Menu[] เป็น MenuGridItem[]
     currentUser?: string;
     onDelete?: (recipeId: string, author: string) => void;
 }

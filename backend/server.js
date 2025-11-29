@@ -1,8 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
-// **เพิ่มการ import bcryptjs**
-const bcrypt = require('bcryptjs'); 
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +14,13 @@ const pool = new Pool({
 app.use(cors());
 app.use(express.json());
 
-// Test DB Connection
+// Mock Verify Token Middleware
+const verifyToken = (req, res, next) => {
+    req.user = { id: 1 }; 
+    next();
+};
+
+// Health Check
 app.get('/api/health', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
@@ -27,22 +32,19 @@ app.get('/api/health', async (req, res) => {
 
 // ==================== USERS & AUTH API ====================
 
-// **[เดิม] Create new user (Sign Up) - ปรับปรุงให้ใช้ bcrypt**
+// 1. Sign Up (Create User)
 app.post('/api/users', async (req, res) => {
   try {
-    // รับ password_plain_text เข้ามาแทน password_hash
     const { username, email, password, avatar_url } = req.body; 
     
     if (!password) {
         return res.status(400).json({ error: 'Password is required' });
     }
 
-    // 1. **เข้ารหัสรหัสผ่าน (Hash Password)**
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
     
     const result = await pool.query(
-      // เปลี่ยนฟิลด์ที่รับจาก req.body
       'INSERT INTO users (username, email, password_hash, avatar_url) VALUES ($1, $2, $3, $4) RETURNING id, username, email, avatar_url, created_at',
       [username, email, password_hash, avatar_url]
     );
@@ -50,7 +52,6 @@ app.post('/api/users', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('User creation error:', error);
-    // ตรวจสอบ Duplicate Key Error (เช่น email ซ้ำ)
     if (error.code === '23505') {
         return res.status(409).json({ error: 'User with this email already exists.' });
     }
@@ -58,41 +59,29 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-// **[ใหม่] User Login (Authentication)**
+// 2. Login
 app.post('/api/auth/login', async (req, res) => {
   try {
-    // รับ email และรหัสผ่านแบบ plain text
     const { email, password } = req.body;
     
-    // 1. ค้นหาผู้ใช้จาก Email
     const userResult = await pool.query(
       'SELECT id, username, email, password_hash, avatar_url FROM users WHERE email = $1',
       [email]
     );
     
     if (userResult.rows.length === 0) {
-      // ไม่พบผู้ใช้
       return res.status(401).json({ error: 'Invalid Email or Password' });
     }
     
     const user = userResult.rows[0];
-    
-    // 2. ตรวจสอบรหัสผ่าน: เปรียบเทียบรหัสผ่านที่ส่งมากับ password_hash ใน DB
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
-      // รหัสผ่านไม่ตรง
       return res.status(401).json({ error: 'Invalid Email or Password' });
     }
     
-    // 3. Login สำเร็จ (ในโปรเจกต์จริงจะมีการสร้าง JWT Token ที่นี่)
-    // ลบ password_hash ออกจาก object ก่อนส่งกลับ
     delete user.password_hash; 
-    
-    res.json({ 
-        message: 'Login successful', 
-        user: user 
-    });
+    res.json({ message: 'Login successful', user: user });
     
   } catch (error) {
     console.error('Login error:', error);
@@ -103,8 +92,7 @@ app.post('/api/auth/login', async (req, res) => {
 // Get all users
 app.get('/api/users', async (req, res) => {
   try {
-    // ไม่ดึง password_hash ออกมา
-    const result = await pool.query('SELECT id, username, email, avatar_url, created_at, updated_at FROM users ORDER BY id');
+    const result = await pool.query('SELECT id, username, email, avatar_url, created_at FROM users ORDER BY id');
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -115,64 +103,24 @@ app.get('/api/users', async (req, res) => {
 app.get('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    // ไม่ดึง password_hash ออกมา
-    const result = await pool.query('SELECT id, username, email, avatar_url, created_at, updated_at FROM users WHERE id = $1', [id]);
+    const result = await pool.query('SELECT id, username, email, avatar_url, created_at FROM users WHERE id = $1', [id]);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
     
     res.json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Update user (ไม่ควรให้ Update รหัสผ่านที่นี่)
-app.put('/api/users/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    // ไม่รับ password_hash ตรงๆ
-    const { username, email, avatar_url } = req.body; 
-    
-    const result = await pool.query(
-      'UPDATE users SET username = $1, email = $2, avatar_url = $3, updated_at = NOW() WHERE id = $4 RETURNING id, username, email, avatar_url',
-      [username, email, avatar_url, id]
-    );
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    res.json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Delete user
-app.delete('/api/users/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    res.json({ message: 'User deleted', user: result.rows[0] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 // ==================== RECIPES API ====================
-// ... (โค้ด Recipes API เดิม) ...
 
+// Get all recipes
 app.get('/api/recipes', async (req, res) => {
   try {
     const { search, category } = req.query;
-    
     let query = `
       SELECT r.*, u.username, u.avatar_url 
       FROM recipeservice r
@@ -186,7 +134,7 @@ app.get('/api/recipes', async (req, res) => {
       query += ` AND (r.title ILIKE $${params.length} OR r.description ILIKE $${params.length})`;
     }
     
-    if (category) {
+    if (category && category !== 'all') {
       params.push(category);
       query += ` AND r.category = $${params.length}`;
     }
@@ -239,113 +187,44 @@ app.get('/api/users/:userId/recipes', async (req, res) => {
   }
 });
 
-// Create new recipe
+// 🔑 [FIXED] Create new recipe (POST)
 app.post('/api/recipes', async (req, res) => {
   try {
-    const { title, description, image_url, category, user_id } = req.body;
+    const { title, description, image, category, userId } = req.body; 
     
     const result = await pool.query(
-      'INSERT INTO recipeservice (title, description, image_url, category, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [title, description, image_url, category, user_id]
+      'INSERT INTO recipeservice (title, description, image, category, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [title, description, image, category, userId]
     );
     
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Recipe creation error:', error);
+    res.status(500).json({ error: error.message, debug_code: error.code });
   }
 });
 
-// Update recipe
-app.put('/api/recipes/:id', async (req, res) => {
-  try {
+// Delete recipe (DELETE)
+app.delete('/api/recipes/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
-    const { title, description, image_url, category } = req.body;
-    
-    const result = await pool.query(
-      'UPDATE recipeservice SET title = $1, description = $2, image_url = $3, category = $4 WHERE id = $5 RETURNING *',
-      [title, description, image_url, category, id]
-    );
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Recipe not found' });
+    const userId = req.user.id; 
+
+    try {
+        const result = await pool.query(
+            'DELETE FROM recipeservice WHERE id = $1 AND user_id = $2 RETURNING *',
+            [id, userId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Recipe not found or unauthorized' });
+        }
+
+        res.status(200).json({ message: 'Recipe deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting recipe:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-    
-    res.json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 });
-
-// Delete recipe
-app.delete('/api/recipes/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query('DELETE FROM recipeservice WHERE id = $1 RETURNING *', [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Recipe not found' });
-    }
-    
-    res.json({ message: 'Recipe deleted', recipe: result.rows[0] });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ==================== COMMENTS API ====================
-// ... (โค้ด Comments API เดิม) ...
-
-app.get('/api/recipes/:recipeId/comments', async (req, res) => {
-  try {
-    const { recipeId } = req.params;
-    const result = await pool.query(`
-      SELECT c.*, u.username, u.avatar_url 
-      FROM recipecomments c
-      LEFT JOIN users u ON c.user_id = u.id
-      WHERE c.recipe_id = $1
-      ORDER BY c.created_at DESC
-    `, [recipeId]);
-    
-    res.json(result.rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Create new comment
-app.post('/api/recipes/:recipeId/comments', async (req, res) => {
-  try {
-    const { recipeId } = req.params;
-    const { comment_text, user_id } = req.body;
-    
-    const result = await pool.query(
-      'INSERT INTO recipecomments (recipe_id, user_id, comment_text) VALUES ($1, $2, $3) RETURNING *',
-      [recipeId, user_id, comment_text]
-    );
-    
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Delete comment
-app.delete('/api/comments/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query('DELETE FROM recipecomments WHERE id = $1 RETURNING *', [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Comment not found' });
-    }
-    
-    res.json({ message: 'Comment deleted', comment: result.rows[0] });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ==================== SERVER ====================
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

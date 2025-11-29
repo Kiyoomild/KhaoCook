@@ -1,36 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { recipeService }    from '../../services/recipeService';
-import type { Recipe } from '../../services/recipeService';
-import './ProfilePage.css';
-import AboutSection from '../../components/home/AboutSection';
-//import type { Menu } from '../../types/menu.types';
+// src/pages/ProfilePage/ProfilePage.tsx
 
-// Mock Data สำหรับเมนูของ User
-const mockUserMenus = [
-    {
-        id: '1',
-        image: 'https://i.pinimg.com/1200x/1f/ba/3a/1fba3a44f5f265dbe4510f0b6583be57.jpg',
-        title: 'ขนมปังกระเทียม',
-        likes: 50,
-        isLiked: false
-    },
-    {
-        id: '2',
-        image: 'https://i.pinimg.com/1200x/3b/46/90/3b469087a13ab6e5f12491ee67ea3aa1.jpg',
-        title: 'อูด้งเทมปุระ',
-        likes: 48,
-        isLiked: false
-    },
-    {
-        id: '3',
-        image: 'https://i.pinimg.com/1200x/f6/28/5a/f6285a09ead0216769e0509dcd3a2323.jpg',
-        title: 'ไดฟุกุไส้ถั่วแดง',
-        likes: 75,
-        isLiked: false
-    }
-];
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/useAuth'; 
+import { recipeService } from '../../services/recipeService';
+import type { Recipe } from '../../services/recipeService';
+import AboutSection from '../../components/home/AboutSection';
+import './ProfilePage.css';
 
 interface MenuWithLikes extends Recipe {
     likes: number;
@@ -38,55 +14,47 @@ interface MenuWithLikes extends Recipe {
 }
 
 const ProfilePage: React.FC = () => {
-    const { user, isAuthenticated} = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [ activeTab, setActiveTab ] = useState<'recipes' | 'favorite'>('recipes');
     const [ menus, setMenus ] = useState<MenuWithLikes[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [ loading, setLoading ] = useState(false);
 
-    //โหลดเมนูของ user คนนี้
-    const loadUserRecipes = () => {
-        if (!user) return;
+    const loadUserRecipes = useCallback(async () => {
+        if (!user?.id) return;
 
         setLoading(true);
         try {
-            //ดึงเมนูจริงจาก recipeService
-            const userRecipes = recipeService.getUserRecipes(user.username);
+            const userRecipes = await recipeService.getUserRecipes(user.id);
 
-            //แปลงรูปแบบที่ี likes และ isLiked
-            const recipesWithLikes: MenuWithLikes[] = userRecipes.map(recipe => ({
+            const recipesWithLikes: MenuWithLikes[] = userRecipes.map((recipe: Recipe) => ({
                 ...recipe,
-                likes: 0,
-                isLiked: false
+                likes: 0, 
+                isLiked: false 
             }));
 
-            //ถ้าไม่มีเมนูจริง ใช้ mockData
-            if (recipesWithLikes.length === 0) {
-                setMenus(mockUserMenus as MenuWithLikes[]);
-            } else {
-                setMenus(recipesWithLikes);
-            }
-
+            setMenus(recipesWithLikes);
             console.log('User recipes loaded:', recipesWithLikes.length);
         } catch (error) {
-            console.log('Error loading user recipes:', error);
-            //ถ้า error ใช้ mockdata
-            setMenus(mockUserMenus as MenuWithLikes[]);
+            console.error('Error loading user recipes:', error);
+            setMenus([]); 
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.id]);
 
     useEffect(() => {
-        loadUserRecipes();
-    }, [user, location.state])
+        if (isAuthenticated) {
+            loadUserRecipes();
+        }
+    }, [isAuthenticated, loadUserRecipes, location.state]);
 
     const handleAddRecipe = () => {
         navigate('/add-recipe');
     };
 
-    const handleLike = (menuId: string) => {
+    const handleLike = (menuId: number) => {
         setMenus(prev => prev.map(menu =>
             menu.id === menuId
                 ? {
@@ -98,24 +66,26 @@ const ProfilePage: React.FC = () => {
         ));
     };
 
-    const handleShare = (menuId: string) => {
-        // TODO: เพิ่มฟังก์ชัน share
+    const handleShare = (menuId: string | number) => {
         console.log('Share menu:', menuId);
         alert('คัดลอกลิงก์แล้ว!');
     };
 
-    const handleEdit = (menuId: string) => {
-        navigate(`/edit-menu/${menuId}`);
+    // [FIX 2] แก้ Warning Unused Variable
+    const handleEdit = (_menuId: number) => {
+        void _menuId; // 🔑 เพิ่มบรรทัดนี้: เพื่อบอก Linter ว่าตัวแปรถูกเรียกใช้แล้ว
+        alert("ฟังก์ชันแก้ไขยังไม่เปิดใช้งาน");
+        // navigate(`/edit-menu/${_menuId}`);
     };
 
-    const handleDelete = (menuId: string) => {
+    const handleDelete = async (menuId: number) => {
         if (window.confirm('คุณต้องการลบเมนูนี้หรือไม่?')) {
-            const success = recipeService.deleteRecipe(menuId);
-
-            if (success) {
+            try {
+                await recipeService.deleteRecipe(menuId.toString()); 
                 alert('ลบเมนูเรียบร้อยแล้ว');
-                loadUserRecipes();
-            } else {
+                loadUserRecipes(); 
+            } catch (error) {
+                console.error('Error deleting recipe:', error);
                 alert('ไม่สามารถลบเมนูได้ กรุณาลองใหม่อีกครั้ง');
             }
         }
@@ -142,26 +112,20 @@ const ProfilePage: React.FC = () => {
     return (
         <div className="profile-page">
             <div className="profile-container">
-                {/* Back Button */}
-                <button className="back-btn" onClick={() => navigate(-1)}>
-                    ← Back
-                </button>
+                <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
 
-                {/* Profile Header */}
                 <div className="profile-header">
                     <div className="profile-avatar-wrapper">
                         <img
-                            src={user.avatar || user.avatarURL || 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg'}
+                            src={user.avatar_url || 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg'}
                             alt="Avatar"
                             className="profile-avatar"
+                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg' }}
                         />
                     </div>
                     <h1 className="profile-username">@{user.username}</h1>
-                    <p className="profile-caption">
-                        {(user as any).bio || 'รักการทำอาหารและแชร์สูตรอาหารอร่อยๆ 🍳✨'}
-                    </p>
+                    <p className="profile-caption">รักการทำอาหารและแชร์สูตรอาหารอร่อยๆ 🍳✨</p>
 
-                    {/* Stats */}
                     <div className="profile-stats">
                         <div className="stat-item">
                             <span className="stat-number">{menus.length}</span>
@@ -173,75 +137,47 @@ const ProfilePage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Edit & Share Buttons */}
                     <div className="profile-actions">
-                        <button className="edit-profile-btn" onClick={() => handleEdit('/edit-profile')}>
-                            Edit
-                        </button>
-                        <button className="share-profile-btn" onClick={() => handleShare('profile')}>
-                            Share
-                        </button>
+                        <button className="edit-profile-btn" onClick={() => handleEdit(0)}>Edit</button>
+                        <button className="share-profile-btn" onClick={() => handleShare('profile')}>Share</button>
                     </div>
                 </div>
 
-                {/* Tabs */}
                 <div className="profile-tabs">
-                    <button 
-                        className={`tab-btn ${activeTab === 'recipes' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('recipes')}
-                    >
-                        <span className="tab-icon">📖</span>
-                        Recipes
+                    <button className={`tab-btn ${activeTab === 'recipes' ? 'active' : ''}`} onClick={() => setActiveTab('recipes')}>
+                        <span className="tab-icon">📖</span> Recipes
                     </button>
-                    <button 
-                        className={`tab-btn ${activeTab === 'favorite' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('favorite')}
-                    >
-                        <span className="tab-icon">❤️</span>
-                        Favorite
+                    <button className={`tab-btn ${activeTab === 'favorite' ? 'active' : ''}`} onClick={() => setActiveTab('favorite')}>
+                        <span className="tab-icon">❤️</span> Favorite
                     </button>
                 </div>
 
-                {/* Loading State */}
                 {loading ? (
                     <div className="loading-container">
                         <div className="loading-spinner"></div>
                         <p>กำลังโหลดเมนู...</p>
                     </div>
                 ) : (
-                    /* Menu Grid */
                     <div className="profile-menu-grid">
                         {displayedMenus.length === 0 ? (
                             <div className="empty-state">
-                                <p>
-                                    {activeTab === 'recipes' 
-                                        ? '🍽️ ยังไม่มีสูตรอาหาร' 
-                                        : '❤️ ยังไม่มีรายการโปรด'}
-                                </p>
+                                <p>{activeTab === 'recipes' ? '🍽️ ยังไม่มีสูตรอาหาร' : '❤️ ยังไม่มีรายการโปรด'}</p>
                                 {activeTab === 'recipes' && (
-                                    <button 
-                                        className="add-first-recipe-btn"
-                                        onClick={handleAddRecipe}
-                                    >
-                                        เพิ่มสูตรแรกของคุณ
-                                    </button>
+                                    <button className="add-first-recipe-btn" onClick={handleAddRecipe}>เพิ่มสูตรแรกของคุณ</button>
                                 )}
                             </div>
                         ) : (
                             displayedMenus.map(menu => (
                                 <div key={menu.id} className="profile-menu-card">
-                                    <div 
-                                        className="menu-image-wrapper"
-                                        onClick={() => navigate(`/menu/${menu.id}`)}
-                                    >
+                                    <div className="menu-image-wrapper" onClick={() => navigate(`/menu/${menu.id}`)}>
+                                        {/* [FIX 1] ลบ as any ออก ใช้ menu.image ตรงๆ */}
                                         <img src={menu.image} alt={menu.title} className="menu-image" />
                                         
-                                        {/* ปุ่มลบ (แสดงเฉพาะใน Recipes tab) */}
                                         {activeTab === 'recipes' && (
                                             <button 
                                                 className="delete-menu-btn"
                                                 onClick={(e) => {
-                                                    e.stopPropagation(); // ป้องกันไม่ให้คลิกไปที่รูป
+                                                    e.stopPropagation();
                                                     handleDelete(menu.id);
                                                 }}
                                             >
@@ -255,19 +191,13 @@ const ProfilePage: React.FC = () => {
                                             <span className="menu-username">@{user.username}</span>
                                         </div>
                                         <div className="menu-actions">
-                                            <button 
-                                                className={`like-btn ${menu.isLiked ? 'liked' : ''}`}
-                                                onClick={() => handleLike(menu.id)}
-                                            >
+                                            <button className={`like-btn ${menu.isLiked ? 'liked' : ''}`} onClick={() => handleLike(menu.id)}>
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill={menu.isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
                                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                                 </svg>
                                                 <span>{menu.likes}</span>
                                             </button>
-                                            <button 
-                                                className="share-menu-btn"
-                                                onClick={() => handleShare(menu.id)}
-                                            >
+                                            <button className="share-menu-btn" onClick={() => handleShare(menu.id)}>
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                     <circle cx="18" cy="5" r="3" />
                                                     <circle cx="6" cy="12" r="3" />
@@ -284,10 +214,7 @@ const ProfilePage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Add Recipe Button */}
-                <button className="add-recipe-btn" onClick={handleAddRecipe}>
-                    เพิ่มเมนูอาหาร
-                </button>
+                <button className="add-recipe-btn" onClick={handleAddRecipe}>เพิ่มเมนูอาหาร</button>
             </div>
             <AboutSection />
         </div>
