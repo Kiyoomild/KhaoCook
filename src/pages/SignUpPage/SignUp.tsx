@@ -10,12 +10,46 @@ const SignUpPage: React.FC = () => {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [confirmPassword, setConfirmPassword] = useState<string>('');
-    const [avatarURL, setAvatarURL] = useState<string>('');
+    const [avatarImage, setAvatarImage] = useState<string>(''); // เปลี่ยนเป็น base64 string
+    const [avatarPreview, setAvatarPreview] = useState<string>(''); // สำหรับ preview
     const [error, setError] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
 
     const { signup } = useAuth();
     const navigate = useNavigate();
+
+    // จัดการเมื่อเลือกรูปภาพ
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // เช็คขนาดไฟล์ (ไม่เกิน 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                setError('ขนาดไฟล์ต้องไม่เกิน 2MB');
+                return;
+            }
+
+            // เช็คประเภทไฟล์
+            if (!file.type.startsWith('image/')) {
+                setError('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+                setAvatarImage(base64String);
+                setAvatarPreview(base64String);
+                setError(''); // ล้าง error
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // ลบรูปภาพ
+    const handleRemoveImage = () => {
+        setAvatarImage('');
+        setAvatarPreview('');
+    };
 
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,27 +68,27 @@ const SignUpPage: React.FC = () => {
         setLoading(true);
 
         try {
-            const user = await signup(email, password, username);
+            const user = await signup(username, email, password);
 
             if (!user) {
                 throw new Error('ไม่สามารถสร้างบัญชีผู้ใช้ได้');
             }
 
-            // กำหนด Avatar URL
-            const avatar = avatarURL || userService.getUserAvatar(username);
+            // กำหนด Avatar (ใช้ที่ upload หรือ default)
+            const avatar = avatarImage || userService.getUserAvatar(username);
 
-            //บันทึกลง LocalStorage
+            // บันทึกลง LocalStorage
             localStorage.setItem('username', username);
             localStorage.setItem('userAvatar', avatar);
 
-            //เพิ่ม user เข้า userService
+            // เพิ่ม user เข้า userService
             userService.addUser({
                 username: username,
                 avatar: avatar,
                 email: email
             });
 
-            console.log('สมัครสมาชิกสำเร็จ:', { username, avatar });
+            console.log('สมัครสมาชิกสำเร็จ:', { username, avatar: avatar.substring(0, 50) + '...' });
             alert('สมัครสมาชิกสำเร็จ!');
             navigate('/');
         } catch (err: any) {
@@ -91,7 +125,7 @@ const SignUpPage: React.FC = () => {
                             />
                         </div>
 
-                        {/*Email*/}
+                        {/* Email */}
                         <div className="input-group">
                             <input
                                 type="email"
@@ -103,7 +137,7 @@ const SignUpPage: React.FC = () => {
                             />
                         </div>
 
-                        {/*Password*/}
+                        {/* Password */}
                         <div className="input-group">
                             <input
                                 type="password"
@@ -115,7 +149,7 @@ const SignUpPage: React.FC = () => {
                             />
                         </div>
 
-                        {/*Confirm Passwod*/}
+                        {/* Confirm Password */}
                         <div className="input-group">
                             <input
                                 type="password"
@@ -127,21 +161,47 @@ const SignUpPage: React.FC = () => {
                             />
                         </div>
 
-                        {/*Avatar URL (Optional)*/}
+                        {/* Avatar Upload */}
                         <div className="input-group">
-                            <input
-                            type="url"
-                            className="input-field"
-                            placeholder="Avatar URL (Optional)"
-                            value={avatarURL}
-                            onChange={(e) => setAvatarURL(e.target.value)}
-                            />
+                            <label className="avatar-label">รูปโปรไฟล์ (Optional)</label>
+                            
+                            {/* Preview รูปภาพ */}
+                            {avatarPreview && (
+                                <div className="avatar-preview-container">
+                                    <img 
+                                        src={avatarPreview} 
+                                        alt="Avatar Preview" 
+                                        className="avatar-preview"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="remove-avatar-btn"
+                                        onClick={handleRemoveImage}
+                                    >
+                                        ✕ ลบรูป
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Upload Button */}
+                            {!avatarPreview && (
+                                <label className="upload-avatar-btn">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        style={{ display: 'none' }}
+                                    />
+                                    📷 เลือกรูปโปรไฟล์
+                                </label>
+                            )}
+
                             <small className="input-hint">
-                                ใส่รูปโปรไฟล์ของคุณ
+                                ขนาดไฟล์ไม่เกิน 2MB (ถ้าไม่ใส่จะใช้รูปเริ่มต้น)
                             </small>
                         </div>
 
-                        {/*Submit Button*/}
+                        {/* Submit Button */}
                         <button
                             type="submit"
                             className="signup-button"
@@ -160,8 +220,7 @@ const SignUpPage: React.FC = () => {
                 </div>
             </div>
         </div>
-    )
-    
+    );
 };
 
 export default SignUpPage;

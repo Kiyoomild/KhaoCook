@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { recipeService }    from '../../services/recipeService';
 import type { Recipe } from '../../services/recipeService';
 import './ProfilePage.css';
 import AboutSection from '../../components/home/AboutSection';
-//import type { Menu } from '../../types/menu.types';
 
 // Mock Data สำหรับเมนูของ User
 const mockUserMenus = [
@@ -38,12 +37,15 @@ interface MenuWithLikes extends Recipe {
 }
 
 const ProfilePage: React.FC = () => {
-    const { user, isAuthenticated} = useAuth();
+    const { user, isAuthenticated, updateAvatar } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [ activeTab, setActiveTab ] = useState<'recipes' | 'favorite'>('recipes');
     const [ menus, setMenus ] = useState<MenuWithLikes[]>([]);
     const [loading, setLoading] = useState(false);
+    const [showAvatarModal, setShowAvatarModal] = useState(false);
+    const [avatarPreview, setAvatarPreview] = useState<string>('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     //โหลดเมนูของ user คนนี้
     const loadUserRecipes = () => {
@@ -99,13 +101,8 @@ const ProfilePage: React.FC = () => {
     };
 
     const handleShare = (menuId: string) => {
-        // TODO: เพิ่มฟังก์ชัน share
         console.log('Share menu:', menuId);
         alert('คัดลอกลิงก์แล้ว!');
-    };
-
-    const handleEdit = (menuId: string) => {
-        navigate(`/edit-menu/${menuId}`);
     };
 
     const handleDelete = (menuId: string) => {
@@ -119,6 +116,56 @@ const ProfilePage: React.FC = () => {
                 alert('ไม่สามารถลบเมนูได้ กรุณาลองใหม่อีกครั้ง');
             }
         }
+    };
+
+    // ฟังก์ชันสำหรับเปิด modal เปลี่ยนรูปโปรไฟล์
+    const handleChangeAvatar = () => {
+        setShowAvatarModal(true);
+        setAvatarPreview(user?.avatar || user?.avatarURL || '');
+    };
+
+    // ฟังก์ชันสำหรับอัปโหลดรูปจากไฟล์
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // ตรวจสอบประเภทไฟล์
+            if (!file.type.startsWith('image/')) {
+                alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+                return;
+            }
+
+            // ตรวจสอบขนาดไฟล์ (จำกัดที่ 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('ขนาดไฟล์ต้องไม่เกิน 5MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setAvatarPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // ฟังก์ชันสำหรับบันทึกรูปโปรไฟล์
+    const handleSaveAvatar = () => {
+        console.log('=== Save Avatar Debug ===');
+        console.log('Avatar Preview:', avatarPreview);
+        console.log('Current User:', user);
+        console.log('Update Avatar Function:', updateAvatar);
+
+        if (avatarPreview && updateAvatar) {
+            updateAvatar(avatarPreview);
+            setShowAvatarModal(false);
+            alert('เปลี่ยนรูปโปรไฟล์สำเร็จ!');
+            console.log('Avatar update called');
+        } else {
+            console.error('Cannot update avatar:', {
+            hasPreview: !!avatarPreview,
+            hasFunction: !!updateAvatar
+            });
+        }      
     };
 
     if (!isAuthenticated || !user) {
@@ -151,10 +198,18 @@ const ProfilePage: React.FC = () => {
                 <div className="profile-header">
                     <div className="profile-avatar-wrapper">
                         <img
-                            src={user.avatar || user.avatarURL || 'https://i.pinimg.com/736x/e3/cd/b2/e3cdb2270072841808e25fced8500d1d.jpg'}
+                            src={user.avatar || user.avatarURL}
                             alt="Avatar"
                             className="profile-avatar"
                         />
+                        {/* ปุ่มเปลี่ยนรูปโปรไฟล์ */}
+                        <button 
+                            className="change-avatar-btn"
+                            onClick={handleChangeAvatar}
+                            title="เปลี่ยนรูปโปรไฟล์"
+                        >
+                            📷
+                        </button>
                     </div>
                     <h1 className="profile-username">@{user.username}</h1>
                     <p className="profile-caption">
@@ -175,10 +230,10 @@ const ProfilePage: React.FC = () => {
 
                     {/* Edit & Share Buttons */}
                     <div className="profile-actions">
-                        <button className="edit-profile-btn" onClick={() => handleEdit('/edit-profile')}>
+                        <button className="edit-profile-btn">
                             Edit
                         </button>
-                        <button className="share-profile-btn" onClick={() => handleShare('profile')}>
+                        <button className="share-profile-btn">
                             Share
                         </button>
                     </div>
@@ -241,7 +296,7 @@ const ProfilePage: React.FC = () => {
                                             <button 
                                                 className="delete-menu-btn"
                                                 onClick={(e) => {
-                                                    e.stopPropagation(); // ป้องกันไม่ให้คลิกไปที่รูป
+                                                    e.stopPropagation();
                                                     handleDelete(menu.id);
                                                 }}
                                             >
@@ -289,6 +344,72 @@ const ProfilePage: React.FC = () => {
                     เพิ่มเมนูอาหาร
                 </button>
             </div>
+
+            {/* Modal เปลี่ยนรูปโปรไฟล์ */}
+            {showAvatarModal && (
+                <div className="avatar-modal-overlay" onClick={() => setShowAvatarModal(false)}>
+                    <div className="avatar-modal" onClick={(e) => e.stopPropagation()}>
+                        <h2>เปลี่ยนรูปโปรไฟล์</h2>
+                        
+                        <div className="avatar-preview-container">
+                            <img 
+                                src={avatarPreview} 
+                                alt="Preview" 
+                                className="avatar-preview"
+                            />
+                        </div>
+
+                        <div className="avatar-input-group">
+                            <label>URL รูปภาพ:</label>
+                            <input
+                                type="text"
+                                placeholder="https://example.com/image.jpg"
+                                value={avatarPreview}
+                                onChange={(e) => setAvatarPreview(e.target.value)}
+                                className="avatar-url-input"
+                            />
+                        </div>
+
+                        <div className="avatar-divider">
+                            <span>หรือ</span>
+                        </div>
+
+                        <div className="avatar-upload-group">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                accept="image/*"
+                                onChange={handleFileUpload}
+                                style={{ display: 'none' }}
+                            />
+                            <button 
+                                className="upload-btn"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                เลือกไฟล์จากเครื่อง
+                            </button>
+                            <p className="upload-hint">รองรับไฟล์ JPG, PNG, GIF (ไม่เกิน 5MB)</p>
+                        </div>
+
+                        <div className="avatar-modal-actions">
+                            <button 
+                                className="cancel-btn"
+                                onClick={() => setShowAvatarModal(false)}
+                            >
+                                ยกเลิก
+                            </button>
+                            <button 
+                                className="save-btn"
+                                onClick={handleSaveAvatar}
+                                disabled={!avatarPreview}
+                            >
+                                บันทึก
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <AboutSection />
         </div>
     );

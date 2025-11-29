@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { userService } from '../services/userService'; // เพิ่มบรรทัดนี้
+import { userService } from '../services/userService';
 
 interface User {
     id: string;
@@ -16,6 +16,7 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<User | null>;
     signup: (username: string, email: string, password: string) => Promise<User | null>;
     logout: () => void;
+    updateAvatar: (newAvatarUrl: string) => void; // เพิ่มฟังก์ชันนี้
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,11 +74,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             
             // Mock data สำหรับทดสอบ
             const mockUser: User = {
-                id: Date.now().toString(), // สร้าง id ไม่ซ้ำ
+                id: Date.now().toString(),
                 username,
                 email,
                 avatar: avatar,
-                avatarURL: avatar // ใช้ค่าเดียวกัน
+                avatarURL: avatar
             };
 
             // บันทึกใน Memory
@@ -111,14 +112,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         setUser(null);
         setIsAuthenticated(false);
-        
-        // ลบข้อมูลใน localStorage
-        localStorage.removeItem('username');
-        localStorage.removeItem('userAvatar');
+    };
+
+    // ฟังก์ชันสำหรับอัปเดตรูปโปรไฟล์
+    const updateAvatar = (newAvatarUrl: string): void => {
+        if (currentAuthUser) {
+            // อัปเดตใน memory
+            const updatedUser = {
+                ...currentAuthUser,
+                avatar: newAvatarUrl,
+                avatarURL: newAvatarUrl
+            };
+
+            currentAuthUser = updatedUser;
+            // อัปเดต state
+            setUser({ ...updatedUser});
+
+            // อัปเดตใน userService
+            if (typeof userService.updateUserAvatar === 'function') {
+                userService.updateUserAvatar(currentAuthUser.username, newAvatarUrl);
+            }
+
+            console.log('Avatar updated successfully:', newAvatarUrl);
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated, login, signup, logout }}>
+        <AuthContext.Provider value={{ 
+            user, 
+            isAuthenticated, 
+            login, 
+            signup, 
+            logout,
+            updateAvatar  // เพิ่มเข้าไปใน Provider
+        }}>
             {children}
         </AuthContext.Provider>
     );
@@ -133,6 +160,6 @@ export const useAuth = (): AuthContextType => {
     return context;
 };
 
-// Helper function สำหรับเข้าถึง current user (สำหรับ service อื่นๆ)
+// Helper function สำหรับเข้าถึง current user
 export const getCurrentUser = (): User | null => currentAuthUser;
 export const getAuthToken = (): string | null => authToken;

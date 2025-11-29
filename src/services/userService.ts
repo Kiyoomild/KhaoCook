@@ -62,17 +62,25 @@ export const userService = {
   },
 
   //Update avatar
-  updateUserAvatar: (username: string, avatar: string): boolean => {
-    const userIndex = userData.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
-
-    if (userIndex === -1) {
-      console.log('User not found:', username);
-      return false;
-    }
-    userData[userIndex].avatar = avatar;
-    console.log('Avatar update for:', username);
-    return true;
-  },
+  updateUserAvatar: (username: string, newAvatarUrl: string): boolean => {
+        try {
+            // หา user ที่ต้องการอัปเดต
+            const userIndex = userData.findIndex(u => u.username === username);
+            
+            if (userIndex !== -1) {
+                // อัปเดต avatar
+                userData[userIndex].avatar = newAvatarUrl;
+                console.log(`Avatar updated for ${username}:`, newAvatarUrl);
+                return true;
+            }
+            
+            console.warn(`User ${username} not found`);
+            return false;
+        } catch (error) {
+            console.error('Error updating avatar:', error);
+            return false;
+        }
+    },
 
   //ลบ User
   deleteUser: (username: string): boolean => {

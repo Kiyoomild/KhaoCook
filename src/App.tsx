@@ -4,7 +4,7 @@ import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext.tsx'
 import Header from './components/layout/Header/Header.tsx'
 import LogInPage from './pages/LogInPage/Login.tsx';
-import SignUpPage from './pages/SignUpPage/Signup.tsx';
+import SignUpPage from './pages/SignUpPage/SignUp.tsx';
 import HomePage from './pages/HomePage/HomePage.tsx';
 import ProfilePage from './pages/ProfilePage/ProfilePage.tsx'
 import MenuDetailPage from './pages/MenuDetailPage/MenuDetailPage.tsx';
