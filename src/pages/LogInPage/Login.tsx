@@ -1,5 +1,5 @@
 import { useState} from 'react'
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext'
 import { userService } from '../../services/userService'
 import KhaoCook5 from '../../assets/images/KhaoCook5.png'
@@ -96,9 +96,9 @@ const LoginPage: React.FC = () => {
                         </button>
                         <p className="signup-text">
                             Don't have an account?{' '}
-                            <a href="/signup" className="signup-link">
+                            <Link to="/signup" className="signup-link">
                                 Signup
-                            </a>
+                            </Link>
                         </p>
                     </form>
                 </div>
