@@ -1,4 +1,3 @@
-// authHelpers.ts
 import type { UserData } from '../services/api';
 
 // ดึงค่าเริ่มต้นจาก LocalStorage

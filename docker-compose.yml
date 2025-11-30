@@ -1,25 +1,4 @@
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: khaocook-db
-    environment:
-      POSTGRES_DB: khaocook_db
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-    networks:
-      - khaocook-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d khaocook_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Backend API
   backend:
     build: ./backend
@@ -27,11 +6,12 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/khaocook_db
+      # *** อัปเดต DATABASE_URL ให้ชี้ไปที่ Cloud SQL Public IP ***
+      # User: khaocook-first-project
+      # Password: panitta04032547
+      # IP: 136.110.48.92
+      - DATABASE_URL=postgresql://khaocook-first-project:panitta04032547@136.110.48.92:5432/khaocook_db
       - NODE_ENV=production
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - khaocook-network
 
@@ -49,8 +29,6 @@ services:
     networks:
       - khaocook-network
 
-volumes:
-  postgres_data:
 
 networks:
   khaocook-network:
